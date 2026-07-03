@@ -88,8 +88,12 @@
         .tag-project { background: #f0f9ff; color: #0284c7; border: 1px solid #bae6fd; }
 
         /* 郵件詳細內容 */
-        .email-detail-header { border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 18px; }
-        .email-subject { font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #0f172a; line-height: 1.3; }
+        .email-detail-header { position: relative; border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 18px; }
+        .header-actions { position: absolute; right: 0; top: 0; display: flex; gap: 8px; }
+        .btn-icon-reply { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #475569; display: flex; align-items: center; gap: 5px; transition: all 0.2s; font-weight: 600; }
+        .btn-icon-reply:hover { background: #e2e8f0; color: #0f172a; }
+        
+        .email-subject { font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #0f172a; line-height: 1.3; padding-right: 130px; }
         .email-meta { font-size: 14px; color: #475569; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .email-sender-address { color: #334155; font-family: monospace; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
         .alert-icon { color: #dc2626; cursor: help; font-weight: bold; background: #fee2e2; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 13px; border: 1px solid #fca5a5; }
@@ -108,6 +112,18 @@
         
         .email-signature { margin-top: 25px; padding-top: 15px; border-top: 1px solid #e2e8f0; font-size: 13px; color: #64748b; line-height: 1.5; }
         .confidential-notice { margin-top: 12px; font-size: 11.5px; color: #94a3b8; font-style: italic; background: #f1f5f9; padding: 8px 12px; border-radius: 4px; }
+
+        /* ---------------------------------------------------
+           新增：回信編輯器 (Reply Compose Box)
+        --------------------------------------------------- */
+        .reply-compose-area { display: none; background: #ffffff; border: 1px solid #3b82f6; border-radius: 8px; margin-bottom: 25px; overflow: hidden; box-shadow: 0 4px 15px rgba(59,130,246,0.1); animation: fadeIn 0.3s ease-out; }
+        .reply-header { background: #f0f9ff; padding: 10px 15px; border-bottom: 1px solid #bae6fd; font-size: 13px; color: #0284c7; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .reply-close-btn { cursor: pointer; color: #64748b; border: none; background: none; font-size: 16px; font-weight: bold; }
+        .reply-close-btn:hover { color: #0f172a; }
+        .reply-textarea { width: 100%; border: none; padding: 15px; font-size: 14.5px; color: #334155; resize: vertical; min-height: 120px; outline: none; font-family: inherit; line-height: 1.6; }
+        .reply-footer { background: #f8fafc; padding: 12px 15px; border-top: 1px solid #e2e8f0; text-align: right; }
+        .btn-send-reply { background: #2563eb; color: white; border: none; padding: 10px 24px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; transition: background 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-send-reply:hover { background: #1d4ed8; }
 
         /* ---------------------------------------------------
            多元資安應對決策控制台 (Action Console)
@@ -159,7 +175,6 @@
 </head>
 <body>
 
-<!-- 任務前導 -->
 <div id="intro-screen">
     <div class="intro-header">
         <div class="intro-tag">CYBERSECURITY SIMULATION</div>
@@ -187,9 +202,8 @@
             <h5>🎯 今日挑戰與 OCF SSD 防衛原則</h5>
             <ul>
                 <li>在真實的網路攻擊中，防禦絕對不只是單純的「不點擊」，而是需要運用<b>多元應對策略 (Multi-layered Defense)</b>。</li>
-                <li>面對收件匣中的每一封郵件，您將有 4 種應對選擇：<b>直接順從執行</b>、<b>另闢獨立管道驗證</b>、<b>通報資安團隊隔離</b>、或<b>進行進階技術檢視</b>。</li>
+                <li>面對收件匣中的每一封郵件，您將有多種應對選擇：<b>直接順從執行</b>、<b>另闢獨立管道驗證</b>、<b>通報資安團隊隔離</b>、<b>進階技術檢視</b>，甚至可以直接嘗試<b>回覆信件</b>。</li>
                 <li>請運用批判性思考與自我監控，識別出潛藏在業務信件中的社交工程陷阱，選擇最適當的資安行動！</li>
-                <li><b>提示：</b>系統的<b>「💡 資安小幫手」預設為收起狀態</b>。若遇疑惑，可主動展開提示協助判斷。</li>
             </ul>
         </div>
     </div>
@@ -202,7 +216,6 @@
     </div>
 </div>
 
-<!-- 瀏覽器外框容器 -->
 <div id="browser-window">
     <div class="browser-header">
         <div class="browser-dots">
@@ -227,7 +240,6 @@
 
     <div class="page-container">
         
-        <!-- 頁面一：主郵件系統介面 -->
         <div id="page1" class="page active">
             <div class="mail-layout">
                 <div class="sidebar">
@@ -240,7 +252,6 @@
                 </div>
                 
                 <div class="mail-list-view">
-                    <!-- 1. 收件匣列表 -->
                     <div id="list-inbox" class="mail-list-container active-list">
                         <h3>收件匣 (Inbox)</h3>
                         
@@ -276,7 +287,6 @@
                             <span class="tag tag-normal">一般公告</span>
                         </div>
 
-                        <!-- 【新增】將原本的博弈抽獎改為更真實的「一卡通電子發票中獎通知」 -->
                         <div class="email-item" onclick="viewEmail('spam-ipass-invoice')">
                             <div>
                                 <span style="color: #1e293b; font-weight: 600;">一卡通（iPASS）會員服務中心</span>
@@ -286,7 +296,6 @@
                         </div>
                     </div>
 
-                    <!-- 2. 寄件備份列表 -->
                     <div id="list-sent" class="mail-list-container">
                         <h3>寄件備份 (Sent)</h3>
                         <div class="email-item" onclick="viewEmail('sent-jp-sample')">
@@ -312,7 +321,6 @@
                         </div>
                     </div>
 
-                    <!-- 3. 垃圾郵件列表 -->
                     <div id="list-spam" class="mail-list-container">
                         <h3>垃圾郵件 (Spam)</h3>
                         <div class="email-item" onclick="viewEmail('spam-verify')">
@@ -341,13 +349,11 @@
             </div>
         </div>
 
-        <!-- 頁面二：郵件內容展示頁 -->
         <div id="page2" class="page">
             <button class="btn-back-list" onclick="goBackToFolder()">‹ 返回郵件列表</button>
             <div id="email-detail-content"></div>
         </div>
 
-        <!-- 頁面三：應對策略解析與結果 -->
         <div id="page3" class="page">
             <div id="resultContent" class="result-screen"></div>
         </div>
@@ -409,7 +415,7 @@
                 <strong>💡 OCF SSD 資安小幫手（行政人員專屬破綻分析）：</strong>
                 <ul>
                     <li><b>針對日常慣性的攻擊：</b> 行政人員每天都要開報價單、履歷與規格書。黑客故意使用 Project Loom 專案名稱與「趕交期」時間壓力，誘使您放下戒心。</li>
-                    <li><b>致命副檔名偽裝 (.exe/.vbs)：</b> 正常的商業報價單、合約單據一律是 PDF、XLSX 或官方雲端連結。<b>嚴禁點開任何 EXE、VBS、SCR 或 BAT 結尾的單據附件！</b></li>
+                    <li><b>致命副檔名偽裝：</b> 正常的商業報價單、合約單據一律是 PDF 或 XLSX。<b>嚴禁點開任何 EXE、VBS、SCR 或 BAT 結尾的單據附件！</b></li>
                     <li><b>網域偽裝 (Typosquatting)：</b> 發件網域 <code>harukaze-plushs.co.jp</code> 比佐藤總監的正確網域多了一個 <b>s</b>。</li>
                 </ul>
             `,
@@ -428,7 +434,7 @@
                     desc: `<b>應對策略成功分析：</b><br>
                     您保持了卓越的行政守門員警覺心！面對倒數計時與工廠催件，您沒有盲目點開附件。您遵守「另闢獨立管道驗證 (Out-of-band verification)」原則——透過既有的電話或官方 Slack 管道，向日本春風商社佐藤總監與內部法務主管求證。佐藤總監確認「工廠從未寄出此報價單，且官方文件一律以 PDF 傳送」，成功為工作室化解了一場勒索病毒浩劫！<br><br>
                     <b>OCF SSD 防身術指導：</b> 
-                    遇到可疑格式或更改常規流程的單據，暫停半分鐘，改用「原郵件以外的第二通訊管道（打電話、傳官方通訊軟體）」跟當事人核對，是破解社交工程最穩妥的方法。`
+                    遇到可疑格式或更改常規流程的單據，暫停半分鐘，改用「原郵件以外的第二通訊管道」跟當事人核對，是破解社交工程最穩妥的方法。`
                 },
                 report: {
                     type: 'success',
@@ -514,31 +520,31 @@
             subject: '【中獎通知】一卡通（iPASS）雲端電子發票中獎通知 - 四獎 4,000 元',
             senderName: '一卡通（iPASS）會員服務中心',
             senderEmail: 'service@ipass-invoice-tw.com',
-            alertMsg: '危險網域：發件人網址並非一卡通官方網域（i-pass.com.tw 或 e-invoice.nat.gov.tw），且信中包含索取銀行資料的連結。',
+            alertMsg: '危險網域：發件人網址並非一卡通官方網域（i-pass.com.tw），且信中包含索取銀行資料的連結。',
             url: 'https://mail.bubu-rihe-studio.com/mail/view?id=0058',
             body: `
                 <p>親愛的會員您好：</p>
                 <p style="margin-top: 12px;">本通知由 <b>一卡通（iPASS）</b> 系統自動寄發，提供您 民國114年9月至12月期間之電子發票對獎結果與帳務摘要，敬請查閱。</p>
-                <p style="margin-top: 12px;"><b>一、對獎作業說明</b><br>本期統一發票已依財政部公布之中獎號碼完成例行對獎作業。您於上述期間使用 一卡通（iPASS） 付款所開立之雲端電子發票，均已納入本次對獎範圍，相關資料亦已同步更新至會員中心供查詢。</p>
+                <p style="margin-top: 12px;"><b>一、對獎作業說明</b><br>本期統一發票已依財政部公布之中獎號碼完成例行對獎作業。您於上述期間使用 一卡通付款所開立之雲端電子發票，均已納入本次對獎範圍。</p>
                 <p style="margin-top: 12px;"><b>二、發票資訊摘要</b><br>發票號碼：QE-52941786<br>發票類型：一卡通（iPASS）電子發票<br>對應獎別：<b>四獎</b><br>中獎金額：<span class="highlight-danger" style="color:#ea580c; background:#ffedd5;">新臺幣 4,000 元</span></p>
-                <p style="margin-top: 12px;"><b>三、資料查詢與確認</b><br>請登入 「 一卡通發票整合平台 」 查閱完整發票與帳務資訊，並確認：<br>1. 會員基本資料（姓名、聯絡方式）是否正確<br>2. 綁定之銀行帳戶或信用卡是否仍為有效狀態</p>
+                <p style="margin-top: 12px;"><b>三、資料查詢與確認</b><br>請登入「一卡通發票整合平台」查閱完整發票與帳務資訊，並確認：<br>1. 會員基本資料是否正確<br>2. 綁定之銀行帳戶或信用卡是否仍為有效狀態</p>
                 <p style="text-align:center; margin-top:25px;">
-                    <button class="btn btn-pay" style="background:#0ea5e9;" onclick="triggerAction('exec')">💳 登入 一卡通發票整合平台 確認領獎帳戶</button>
+                    <button class="btn btn-pay" style="background:#0ea5e9;" onclick="triggerAction('exec')">💳 登入發票平台確認領獎帳戶</button>
                 </p>
-                <p style="margin-top: 25px; font-size: 12px; color: #94a3b8;"><b>四、提醒事項</b><br>建議定期登入會員中心確認帳戶與電子發票狀態；如近期有銀行帳戶或信用卡異動，請同步更新會員資料。<br>本郵件為系統自動發送之通知信件，僅供帳務資訊參考，請勿直接回覆。<br><br>一卡通（iPASS）會員服務中心<br>中華民國115年3月5日</p>
+                <p style="margin-top: 25px; font-size: 12px; color: #94a3b8;"><b>四、提醒事項</b><br>建議定期登入會員中心確認帳戶與電子發票狀態；如近期有銀行帳戶或信用卡異動，請同步更新會員資料。<br>一卡通（iPASS）會員服務中心</p>
             `,
             scaffold: `
                 <strong>💡 OCF SSD 資安小幫手（發票中獎釣魚解析）：</strong>
                 <ul>
-                    <li><b>逼真的在地化陷阱：</b> 詐騙者利用「一卡通」與「財政部電子發票」等公信力極高的機構，並設定合理的 4,000 元小額獎金，大幅降低您的防備心。</li>
+                    <li><b>逼真的在地化陷阱：</b> 詐騙者利用「一卡通」與合理的小額獎金(4,000元)，大幅降低防備心。</li>
                     <li><b>個資劫持陷阱：</b> 信中刻意要求您「確認綁定的銀行帳戶或信用卡」，目的就是引導您進入假網頁輸入信用卡號碼或網銀密碼。</li>
-                    <li><b>網域辨識：</b> 一卡通的官方網域為 <code>i-pass.com.tw</code>，而財政部電子發票為 <code>e-invoice.nat.gov.tw</code>。信件的發件網域明顯是為了混淆而註冊的假網域。</li>
+                    <li><b>網域辨識：</b> 一卡通的官方網域為 <code>i-pass.com.tw</code>。信件的發件網域明顯是為了混淆而註冊的假網域。</li>
                 </ul>
             `,
             actions: {
-                exec: { type: 'fail', title: '🚨 警告：信用卡卡號與銀行帳戶遭受釣魚竊取！', desc: '您點擊了假一卡通平台的連結，並輸入了信用卡號與驗證碼，詐騙集團立即利用您的卡號進行高額盜刷！<br><br><b>OCF SSD 防身術指導：</b> 收到任何電子發票中獎通知，<b>絕對不要點擊信件內的連結去登錄銀行帳號</b>。請直接打開您手機裡官方的「雲端發票 App」或「一卡通 App」進行確認。' },
+                exec: { type: 'fail', title: '🚨 警告：信用卡卡號與銀行帳戶遭受釣魚竊取！', desc: '您點擊了假一卡通平台的連結，並輸入了信用卡號與驗證碼，詐騙集團立即利用您的卡號進行高額盜刷！<br><br><b>OCF SSD 防身術指導：</b> 絕對不要點擊信件內的連結去登錄銀行帳號。請直接打開您手機裡官方的「雲端發票 App」或「一卡通 App」進行確認。' },
                 verify: { type: 'success', title: '🏅 正確防衛：使用官方 App 獨立查證', desc: '您沒有點擊信件內的按鈕，而是直接拿起手機打開財政部的「統一發票對獎 App」與「一卡通官方 App」，發現根本沒有中獎紀錄，成功識破這是騙取信用卡號的釣魚信！' },
-                report: { type: 'success', title: '🛡️ 通報垃圾郵件封鎖', desc: '您將其通報為釣魚郵件，郵件系統自動升級了過濾規則，成功阻擋該假冒一卡通網域的後續信件。' },
+                report: { type: 'success', title: '🛡️ 通報釣魚郵件', desc: '您將其通報為釣魚郵件，郵件系統自動升級了過濾規則，成功阻擋該假冒一卡通網域的後續信件。' },
                 inspect: { type: 'success', title: '🔍 揭穿釣魚連結', desc: '將滑鼠懸停檢視按鈕，發現實際導向的網址根本不是財政部或一卡通官網，而是一個架設在海外的假網頁，成功識破！' }
             }
         },
@@ -548,7 +554,7 @@
             senderEmail: 'k.sato@harukaze-plush.co.jp',
             alertMsg: '安全網域：這是您發送給日本商務夥伴的正式郵件。',
             url: 'https://mail.bubu-rihe-studio.com/mail/sent/view?id=1198',
-            body: `<p>佐藤總監 您好：</p><p style="margin-top: 12px;">感謝您的來信。附件是本工作室 2026 年度最新客製化棉花娃（含打樣打版說明與布料材質檢驗報告）的樣品規格書。另外，3 隻針對本次聯名合作設計的實體示範娃，已於昨日透過國際快遞寄出。</p><p style="margin-top: 12px;">關於第二階段線上議約，我們非常樂意於本週四（7/5）下午 15:00 進行視訊會議。期待與貴公司的深化合作。</p><div class="email-signature"><b>營運與行政專員 Operations Specialist</b> | 布偶日和工作室</div>`,
+            body: `<p>佐藤總監 您好：</p><p style="margin-top: 12px;">感謝您的來信。附件是本工作室 2026 年度最新客製化棉花娃的樣品規格書。另外，3 隻針對本次聯名合作設計的實體示範娃，已於昨日透過國際快遞寄出。</p><p style="margin-top: 12px;">關於第二階段線上議約，我們非常樂意於本週四（7/5）下午 15:00 進行視訊會議。期待與貴公司的深化合作。</p><div class="email-signature"><b>營運與行政專員 Operations Specialist</b> | 布偶日和工作室</div>`,
             scaffold: `<strong>💡 OCF SSD 資安小幫手：</strong><ul><li>這是您先前發出的正常專案對外溝通信件。這證明了 Project Loom 是真實存在的專案，詐騙集團往往就是蒐集這類情報來量身打造偽冒木馬郵件。</li></ul>`,
             actions: {
                 exec: { type: 'success', title: '✅ 正常備份檢閱', desc: '檢閱過往的商務通訊紀錄，掌握專案歷史資訊。' },
@@ -611,7 +617,7 @@
             body: `<p>客戶您好：</p><p style="margin-top: 12px;">您有一件由日本寄往工作室的棉花娃打樣包裹（單號：#JP-88291），因欠缺「進口關稅申報單」及 USD $15 元手續費，目前已遭海關扣留。</p><p style="margin-top: 12px;">請於 <span class="highlight-danger">12小時內點擊下方關稅申報入口</span>，填寫包裹收件人資料並線上支付關稅手續費，逾期包裹將遭退回或銷毀。</p><p style="text-align:center; margin-top:25px;"><button class="btn btn-pay" style="background:#ea580c;" onclick="triggerAction('exec')">💳 前往線上申報與繳納關稅</button></p>`,
             scaffold: `<strong>💡 OCF SSD 資安小幫手：</strong><ul><li><b>包裹釣魚 (Smishing/Phishing)：</b> 利用跨國合作常有包裹往來的習慣，以「海關扣留、繳手續費」誘騙信用卡卡號與到期日。</li><li><b>主動查詢原則：</b> 嚴禁點擊信件內的繳費連結！應自行前往 DHL / FedEx 等正規快遞官網輸入單號查詢狀態。</li></ul>`,
             actions: {
-                exec: { type: 'fail', title: '🚨 致命失誤：公司信用卡卡號遭釣魚網站竊取盜刷！', desc: '您點擊了假關稅繳費網頁並輸入了公務信用卡資料與 OTP 驗證碼，黑客立即在海外網站進行鉅額盜刷！<br><br><b>OCF SSD 防身術指導：</b> 任何以「包裹扣留」、「小額關稅繳納」為由要求線上刷卡的信件，極高機率是信用卡釣魚。請自行至物流官網確認單號。' },
+                exec: { type: 'fail', title: '🚨 致命失誤：公司信用卡卡號遭釣魚網站竊取盜刷！', desc: '您點擊了假關稅繳費網頁並輸入了公務信用卡資料與 OTP 驗證碼，黑客立即在海外網站進行鉅額盜刷！' },
                 verify: { type: 'success', title: '🏅 獨立快遞官網查詢確認', desc: '您前往正規快遞官方網站，手動輸入包裹單號查詢，系統顯示毫無此異常扣留紀錄，確認是詐騙！' },
                 report: { type: 'success', title: '🛡️ 通報資安進行釣魚網址封鎖', desc: '將可疑信件通報 IT 部門，資安人員立即將該假關稅繳費網址加入防火牆黑名單！' },
                 inspect: { type: 'success', title: '🔍 網址跳轉分析成功！', desc: '透過 URL X-Ray 工具分析按鈕連結，發現實際指向的是一個設在海外的可疑刷卡收單頁面，成功識破！' }
@@ -626,27 +632,13 @@
             body: `<p>親愛的企業網銀客戶：</p><p style="margin-top: 12px;">由於金融資安法規升級，您工作室專屬的「企業網路銀行放行憑證」將於今日 23:59 到期失效。</p><p style="margin-top: 12px;">為避免明日無法發放薪資或進行廠商轉帳，請立即點擊下方專屬安全登入通道，完成線上憑證展期。</p><p style="text-align:center; margin-top:25px;"><button class="btn btn-pay" style="background:#dc2626;" onclick="triggerAction('exec')">連線至網銀更新憑證</button></p>`,
             scaffold: `<strong>💡 OCF SSD 資安小幫手：</strong><ul><li><b>銀行鐵律：</b> 任何金融機構，絕不會主動透過電子郵件發送「超連結」要求客戶登入帳號密碼或展期憑證。</li><li><b>網域辨識：</b> 詐騙者常申請類似 <code>bank-security-update.com</code> 的假網址騙取信任，操作網銀務必自行輸入網址。</li></ul>`,
             actions: {
-                exec: { type: 'fail', title: '🚨 警告：企業網銀帳號密碼與放行權限遭外洩！', desc: '您點擊了假銀行的網址並登入了帳號密碼與憑證，黑客立刻在夜間登入真實網銀，將工作室帳戶內的流動資金盜領一空！<br><br><b>OCF SSD 防身術指導：</b> 銀行絕對不會寄送網址要求客戶登入更新憑證或密碼。辦理網銀業務，務必自行從瀏覽器書籤或輸入官方網址登入。' },
+                exec: { type: 'fail', title: '🚨 警告：企業網銀帳號密碼與放行權限遭外洩！', desc: '您點擊了假銀行的網址並登入了帳號密碼與憑證，黑客立刻在夜間登入真實網銀，將工作室帳戶內的流動資金盜領一空！' },
                 verify: { type: 'success', title: '🏅 致電銀行客服專線確認', desc: '您自行撥打存摺上的銀行官方客服專線詢問，客服表示憑證到期會在「網銀登入後的系統公告」提示，絕對不會發郵件連結，成功避免資金被盜！' },
                 report: { type: 'success', title: '🛡️ 通報金管與資安單位', desc: '轉發給資安部與銀行反詐騙信箱，銀行端立即向警政機構通報停止該假冒網域的解析。' },
                 inspect: { type: 'success', title: '🔍 SSL 憑證與 DNS 標頭分析', desc: '透過檢視該網站的 SSL 安全憑證與 DNS 註冊資料，發現該網域僅註冊不到 3 天且註冊人位於海外，徹底識破釣魚圈套！' }
             }
         }
     };
-
-    function switchFolder(folderName) {
-        document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active-menu'));
-        document.getElementById('menu-' + folderName).classList.add('active-menu');
-        
-        document.querySelectorAll('.mail-list-container').forEach(list => list.classList.remove('active-list'));
-        document.getElementById('list-' + folderName).classList.add('active-list');
-        
-        document.getElementById('urlInput').value = `https://mail.bubu-rihe-studio.com/${folderName}`;
-        
-        document.getElementById('page1').classList.add('active');
-        document.getElementById('page2').classList.remove('active');
-        document.getElementById('page3').classList.remove('active');
-    }
 
     let currentEmailKey = '';
     let timerInterval;
@@ -672,7 +664,7 @@
                     </button>
                     <button class="btn-action btn-report" onclick="triggerAction('report')">
                         <span>🛡️ 3. 通報 IT 資安團隊</span>
-                        <span class="sub">主動標記可疑附件並轉發資安組進行隔離</span>
+                        <span class="sub">主動標記可疑信件並轉發資安組進行隔離</span>
                     </button>
                     <button class="btn-action btn-inspect" onclick="triggerAction('inspect')">
                         <span>🔍 4. 技術與雲端沙盒檢視</span>
@@ -684,6 +676,10 @@
 
         document.getElementById('email-detail-content').innerHTML = `
             <div class="email-detail-header">
+                <div class="header-actions">
+                    <button class="btn-icon-reply" onclick="toggleReplyBox()">↩️ 回覆</button>
+                    <button class="btn-icon-reply">↪️ 轉寄</button>
+                </div>
                 <div class="email-subject">${mailData.subject}</div>
                 <div class="email-meta">
                     <strong>發件人：</strong> ${mailData.senderName} 
@@ -692,6 +688,17 @@
                 </div>
             </div>
             <div class="email-body">${mailData.body}</div>
+            
+            <div id="replyComposeBox" class="reply-compose-area">
+                <div class="reply-header">
+                    <span>回覆至：${mailData.senderEmail}</span>
+                    <button class="reply-close-btn" onclick="toggleReplyBox()">×</button>
+                </div>
+                <textarea id="replyTextarea" class="reply-textarea" placeholder="在此輸入您的回覆內容..."></textarea>
+                <div class="reply-footer">
+                    <button class="btn-send-reply" onclick="submitReply()">📤 傳送回覆</button>
+                </div>
+            </div>
             
             ${consoleHtml}
             
@@ -710,6 +717,37 @@
         if(emailKey === 'target-phishing') {
             startTimer();
         }
+    }
+
+    function toggleReplyBox() {
+        const box = document.getElementById('replyComposeBox');
+        if (box.style.display === 'block') {
+            box.style.display = 'none';
+        } else {
+            box.style.display = 'block';
+            document.getElementById('replyTextarea').focus();
+        }
+    }
+
+    function submitReply() {
+        const mailData = emailDatabase[currentEmailKey];
+        const replyText = document.getElementById('replyTextarea').value.trim();
+        
+        if (!replyText) {
+            alert('請先輸入回信內容！');
+            return;
+        }
+
+        const isPhishing = mailData.actions.exec.type === 'fail';
+
+        if (isPhishing) {
+            alert('🚨 【資安防衛警告】\n\n您直接回覆了這封可疑的信件！\n\n在社交工程攻擊中，回信會向攻擊者「證實您的信箱是活躍的」，不僅無助於查證，還可能引發後續更精準的針對性攻擊（Spear Phishing）。\n\n💡 正確做法：不要回覆！請運用下方的「OCF SSD 決策控制台」選擇【通報 IT】或【獨立管道驗證】。');
+        } else {
+            alert('✅ 【回信已送出】\n\n這是一封正常的商務/內部信件，您的回覆已妥善推進業務進度。\n繼續保持您優秀的判斷力！');
+        }
+        
+        document.getElementById('replyTextarea').value = '';
+        toggleReplyBox();
     }
 
     function toggleScaffold(btn) {
