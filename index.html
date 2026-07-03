@@ -175,6 +175,7 @@
 </head>
 <body>
 
+<!-- 任務前導 -->
 <div id="intro-screen">
     <div class="intro-header">
         <div class="intro-tag">CYBERSECURITY SIMULATION</div>
@@ -216,6 +217,7 @@
     </div>
 </div>
 
+<!-- 瀏覽器外框容器 -->
 <div id="browser-window">
     <div class="browser-header">
         <div class="browser-dots">
@@ -240,6 +242,7 @@
 
     <div class="page-container">
         
+        <!-- 頁面一：主郵件系統介面 -->
         <div id="page1" class="page active">
             <div class="mail-layout">
                 <div class="sidebar">
@@ -252,6 +255,7 @@
                 </div>
                 
                 <div class="mail-list-view">
+                    <!-- 1. 收件匣列表 -->
                     <div id="list-inbox" class="mail-list-container active-list">
                         <h3>收件匣 (Inbox)</h3>
                         
@@ -296,6 +300,7 @@
                         </div>
                     </div>
 
+                    <!-- 2. 寄件備份列表 -->
                     <div id="list-sent" class="mail-list-container">
                         <h3>寄件備份 (Sent)</h3>
                         <div class="email-item" onclick="viewEmail('sent-jp-sample')">
@@ -321,6 +326,7 @@
                         </div>
                     </div>
 
+                    <!-- 3. 垃圾郵件列表 -->
                     <div id="list-spam" class="mail-list-container">
                         <h3>垃圾郵件 (Spam)</h3>
                         <div class="email-item" onclick="viewEmail('spam-verify')">
@@ -349,11 +355,13 @@
             </div>
         </div>
 
+        <!-- 頁面二：郵件內容展示頁 -->
         <div id="page2" class="page">
             <button class="btn-back-list" onclick="goBackToFolder()">‹ 返回郵件列表</button>
             <div id="email-detail-content"></div>
         </div>
 
+        <!-- 頁面三：應對策略解析與結果 -->
         <div id="page3" class="page">
             <div id="resultContent" class="result-screen"></div>
         </div>
@@ -689,7 +697,8 @@
             </div>
             <div class="email-body">${mailData.body}</div>
             
-            <div id="replyComposeBox" class="reply-compose-area">
+            <!-- 隱藏的回信編輯區塊 -->
+            <div id="replyComposeBox" class="reply-compose-area" style="display:none;">
                 <div class="reply-header">
                     <span>回覆至：${mailData.senderEmail}</span>
                     <button class="reply-close-btn" onclick="toggleReplyBox()">×</button>
@@ -721,6 +730,7 @@
 
     function toggleReplyBox() {
         const box = document.getElementById('replyComposeBox');
+        if (!box) return;
         if (box.style.display === 'block') {
             box.style.display = 'none';
         } else {
