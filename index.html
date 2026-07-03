@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>資安守門員：商業電子郵件防衛戰 - 企業模擬系統</title>
+    <style>
+        /* 全局樣式與重設 */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background: #f0f4f8; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        
+        /* ---------------------------------------------------
+           任務前導情境簡報頁面 (Intro Screen)
+        --------------------------------------------------- */
+        #intro-screen { width: 960px; background: #ffffff; border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); overflow: hidden; display: flex; flex-direction: column; animation: fadeIn 0.4s ease-out; }
+        .intro-header { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); color: white; padding: 30px 40px; position: relative; }
+        .intro-tag { background: rgba(255,255,255,0.2); display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; letter-spacing: 1px; margin-bottom: 12px; backdrop-filter: blur(4px); }
+        .intro-title { font-size: 28px; font-weight: bold; margin-bottom: 8px; }
+        .intro-subtitle { font-size: 15px; opacity: 0.9; line-height: 1.5; }
+        
+        .intro-body { padding: 35px 40px; color: #334155; line-height: 1.7; font-size: 15px; max-height: 520px; overflow-y: auto; }
+        .profile-card { display: flex; align-items: center; gap: 20px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px; margin-bottom: 25px; }
+        .profile-avatar { width: 64px; height: 64px; background: #e2e8f0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 30px; flex-shrink: 0; border: 2px solid #3b82f6; }
+        .profile-info h4 { font-size: 18px; color: #0f172a; margin-bottom: 4px; }
+        .profile-info p { font-size: 14px; color: #64748b; margin: 0; }
+        
+        .mission-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 20px; border-radius: 0 8px 8px 0; margin-bottom: 20px; }
+        .mission-box h5 { color: #92400e; font-size: 16px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .mission-box ul { padding-left: 20px; color: #78350f; font-size: 14px; }
+        .mission-box li { margin-bottom: 6px; }
+
+        .intro-footer { padding: 0 40px 35px 40px; text-align: right; }
+        .btn-start { background: #3b82f6; color: white; padding: 14px 32px; font-size: 16px; font-weight: bold; border-radius: 8px; border: none; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(59,130,246,0.3); display: inline-flex; align-items: center; gap: 10px; }
+        .btn-start:hover { background: #2563eb; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(59,130,246,0.4); }
+
+        /* ---------------------------------------------------
+           瀏覽器外框容器
+        --------------------------------------------------- */
+        #browser-window { width: 1000px; background: #ffffff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); overflow: hidden; display: none; flex-direction: column; height: 780px; animation: fadeIn 0.4s ease-out; }
+        
+        .browser-header { background: #e2e8f0; padding: 8px 16px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #cbd5e1; user-select: none; flex-shrink: 0; }
+        .browser-dots { display: flex; gap: 8px; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .dot.red { background: #ff5f56; }
+        .dot.yellow { background: #ffbd2e; }
+        .dot.green { background: #27c93f; }
+        
+        .browser-nav { display: flex; gap: 8px; color: #64748b; font-size: 18px; cursor: pointer; }
+        .nav-btn { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+        .nav-btn:hover { background: rgba(0,0,0,0.1); }
+        
+        .browser-tabs { display: flex; align-items: flex-end; margin-bottom: -8px; margin-left: 10px; }
+        .browser-tab { background: #ffffff; padding: 6px 20px; border-radius: 8px 8px 0 0; font-size: 12px; border: 1px solid #cbd5e1; border-bottom: none; display: flex; align-items: center; gap: 8px; color: #1e293b; font-weight: 600; }
+        
+        .browser-address-bar { flex-grow: 1; display: flex; align-items: center; }
+        .address-input { width: 100%; background: #ffffff; border: 1px solid #94a3b8; padding: 4px 12px; border-radius: 20px; font-size: 13px; color: #475569; outline: none; }
+
+        .page-container { flex-grow: 1; position: relative; background: #ffffff; overflow: hidden; }
+        .page { padding: 25px; height: 100%; display: none; overflow-y: auto; }
+        .active { display: block; animation: fadeIn 0.2s ease-in-out; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); } 
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 郵件軟體主佈局 */
+        .mail-layout { display: flex; height: 100%; gap: 20px; }
+        .sidebar { width: 180px; border-right: 1px solid #e2e8f0; padding-right: 15px; flex-shrink: 0; }
+        .sidebar h3 { font-size: 14px; color: #64748b; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; }
+        .sidebar-menu { list-style: none; }
+        .sidebar-menu li { padding: 10px 12px; border-radius: 6px; cursor: pointer; margin-bottom: 5px; font-size: 14px; color: #334155; display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-menu li.active-menu { background: #eff6ff; color: #2563eb; font-weight: bold; }
+        .sidebar-menu li:hover:not(.active-menu) { background: #f8fafc; }
+        
+        /* 郵件列表 */
+        .mail-list-container { flex-grow: 1; display: none; }
+        .mail-list-container.active-list { display: block; }
+        .mail-list-container h3 { font-size: 18px; margin-bottom: 15px; color: #1e293b; border-bottom: 2px solid #2563eb; padding-bottom: 8px; }
+        
+        .email-item { padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; background: #fff; margin-bottom: 8px; }
+        .email-item:hover { background: #f8fafc; border-color: #93c5fd; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .unread { font-weight: bold; color: #0f172a; border-left: 4px solid #2563eb; }
+        .tag { padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; flex-shrink: 0; margin-left: 10px; }
+        .tag-important { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .tag-normal { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+        .tag-spam { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+        .tag-warn { background: #fff7ed; color: #ea580c; border: 1px solid #ffedd5; }
+        .tag-project { background: #f0f9ff; color: #0284c7; border: 1px solid #bae6fd; }
+
+        /* 郵件詳細內容 */
+        .email-detail-header { border-bottom: 1px solid #e2e8f0; padding-bottom: 15px; margin-bottom: 18px; }
+        .email-subject { font-size: 20px; font-weight: bold; margin-bottom: 10px; color: #0f172a; line-height: 1.3; }
+        .email-meta { font-size: 14px; color: #475569; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .email-sender-address { color: #334155; font-family: monospace; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+        .alert-icon { color: #dc2626; cursor: help; font-weight: bold; background: #fee2e2; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 13px; border: 1px solid #fca5a5; }
+        
+        .urgency-banner { background: #fef2f2; border: 1px solid #f87171; border-left: 6px solid #dc2626; padding: 12px 18px; border-radius: 6px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: center; }
+        .urgency-banner .timer { font-family: monospace; font-size: 18px; font-weight: bold; color: #dc2626; background: #fff; padding: 4px 10px; border-radius: 4px; border: 1px solid #fca5a5; }
+        
+        .email-body { font-size: 14.5px; line-height: 1.7; color: #1e293b; background: #fdfdfd; padding: 25px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 25px; box-shadow: inset 0 0 10px rgba(0,0,0,0.01); }
+        .highlight-danger { color: #dc2626; font-weight: bold; background: #fee2e2; padding: 1px 6px; border-radius: 3px; border-bottom: 1px dashed #ef4444; }
+        
+        /* 惡意附件卡片強調 */
+        .attachment-card { background: #fffaf0; border: 2px dashed #ea580c; padding: 16px 20px; border-radius: 8px; margin: 18px 0; display: flex; align-items: center; justify-content: space-between; gap: 15px; }
+        .attachment-icon { font-size: 32px; }
+        .attachment-info h5 { font-size: 15px; color: #9a3412; font-family: monospace; margin-bottom: 4px; word-break: break-all; }
+        .attachment-info p { font-size: 12.5px; color: #c2410c; margin: 0; }
+        
+        .email-signature { margin-top: 25px; padding-top: 15px; border-top: 1px solid #e2e8f0; font-size: 13px; color: #64748b; line-height: 1.5; }
+        .confidential-notice { margin-top: 12px; font-size: 11.5px; color: #94a3b8; font-style: italic; background: #f1f5f9; padding: 8px 12px; border-radius: 4px; }
+
+        /* ---------------------------------------------------
+           多元資安應對決策控制台 (Action Console)
+        --------------------------------------------------- */
+        .action-console { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 18px; margin-top: 20px; }
+        .console-title { font-size: 14px; font-weight: bold; color: #334155; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        
+        .btn-action { padding: 12px 16px; border-radius: 8px; font-size: 13.5px; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; }
+        .btn-action span.sub { font-size: 11.5px; font-weight: normal; opacity: 0.85; }
+        
+        .btn-exec { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+        .btn-exec:hover { background: #fecaca; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(220,38,38,0.15); }
+        
+        .btn-verify { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+        .btn-verify:hover { background: #dbeafe; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(37,99,235,0.15); }
+        
+        .btn-report { background: #f0fdf4; color: #166534; border-color: #bbf7d0; }
+        .btn-report:hover { background: #dcfce7; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(22,163,74,0.15); }
+        
+        .btn-inspect { background: #f3e8ff; color: #6b21a8; border-color: #e9d5ff; }
+        .btn-inspect:hover { background: #e9d5ff; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(147,51,234,0.15); }
+
+        .btn-back-list { background: #64748b; color: white; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-size: 13px; font-weight: 600; margin-bottom: 15px; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-back-list:hover { background: #475569; }
+
+        /* 收納式鷹架提示框 */
+        .scaffold-wrapper { margin-top: 20px; }
+        .btn-hint { background: #ffffff; color: #475569; border: 1px dashed #cbd5e1; padding: 10px 18px; border-radius: 6px; font-size: 13.5px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; width: 100%; justify-content: center; transition: all 0.2s; }
+        .btn-hint:hover { background: #f8fafc; color: #0f172a; border-color: #94a3b8; }
+        .scaffold-box { display: none; background: #fffbeb; border-left: 4px solid #f59e0b; padding: 18px 20px; border-radius: 0 8px 8px 0; margin-top: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.03); animation: fadeIn 0.3s ease; }
+        .scaffold-box strong { color: #92400e; display: block; margin-bottom: 10px; font-size: 14px; }
+        .scaffold-box ul { padding-left: 20px; font-size: 13.5px; color: #78350f; line-height: 1.6; }
+
+        /* 關鍵頁面三：應對策略解析與結果 */
+        .result-screen { padding: 20px 30px; max-width: 750px; margin: 0 auto; }
+        .result-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 15px; }
+        .badge-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .badge-fail { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .badge-warn { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+        
+        .result-title { font-size: 24px; font-weight: bold; color: #0f172a; margin-bottom: 15px; }
+        .result-analysis { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; text-align: left; margin-bottom: 25px; font-size: 14.5px; color: #334155; line-height: 1.7; }
+        .result-analysis h5 { font-size: 15px; color: #0f172a; margin-bottom: 8px; border-bottom: 1px solid #cbd5e1; padding-bottom: 6px; }
+        
+        .btn-retry { background: #2563eb; color: white; padding: 12px 28px; font-size: 15px; font-weight: bold; border-radius: 8px; border: none; cursor: pointer; transition: all 0.2s; }
+        .btn-retry:hover { background: #1d4ed8; }
+    </style>
+</head>
+<body>
+
+<!-- 任務前導 -->
+<div id="intro-screen">
+    <div class="intro-header">
+        <div class="intro-tag">CYBERSECURITY SIMULATION</div>
+        <div class="intro-title">資安守門員：商業電子郵件防衛戰</div>
+        <div class="intro-subtitle">根據 OCF Surveillance Self-Defense (SSD) 指南改編：從多元應對策略中，學習真實世界的數位防身術。</div>
+    </div>
+    
+    <div class="intro-body">
+        <div class="profile-card">
+            <div class="profile-avatar">👩‍💻</div>
+            <div class="profile-info">
+                <h4>您的角色：營運與行政專員 (Operations Specialist)</h4>
+                <p>服務單位：布偶日和工作室 (Bubu Rihe Studio Co., Ltd.)</p>
+                <p style="font-size: 13px; color: #64748b; margin-top: 4px;">職責範圍：協助棉花娃業務排單、廠商單據請款、打樣核對與跨區行政協調。</p>
+            </div>
+        </div>
+        
+        <p style="margin-bottom: 15px;">
+            <b>【背景情境：日本異業合作與併購案 Project Loom】</b><br>
+            工作室目前正與日本「春風聯名商社 (Harukaze Plush)」洽談重要的大型異業合作與品牌併購案（內部代號：<b>Project Loom</b>）。信箱裡滿是與日本代表、製造工廠、法務部門的往來單據，工作室內部充滿了快節奏與高壓的氛圍。<br><br>
+            <b style="color:#b91c1c;">【重要職責提醒】</b> 身為行政人員，您每天都需要開啟各種外部寄來的<b>報價單、請款單、規格書附件</b>。黑客正是利用這種<b>「日常行政慣性」</b>，偽裝成各種官方機構與合作夥伴寄來惡意程式與詐騙連結！
+        </p>
+
+        <div class="mission-box">
+            <h5>🎯 今日挑戰與 OCF SSD 防衛原則</h5>
+            <ul>
+                <li>在真實的網路攻擊中，防禦絕對不只是單純的「不點擊」，而是需要運用<b>多元應對策略 (Multi-layered Defense)</b>。</li>
+                <li>面對收件匣中的每一封郵件，您將有 4 種應對選擇：<b>直接順從執行</b>、<b>另闢獨立管道驗證</b>、<b>通報資安團隊隔離</b>、或<b>進行進階技術檢視</b>。</li>
+                <li>請運用批判性思考與自我監控，識別出潛藏在業務信件中的社交工程陷阱，選擇最適當的資安行動！</li>
+                <li><b>提示：</b>系統的<b>「💡 資安小幫手」預設為收起狀態</b>。若遇疑惑，可主動展開提示協助判斷。</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="intro-footer">
+        <button class="btn-start" onclick="enterMailSystem()">
+            <span>我準備好了，進入郵件系統</span>
+            <span>➔</span>
+        </button>
+    </div>
+</div>
+
+<!-- 瀏覽器外框容器 -->
+<div id="browser-window">
+    <div class="browser-header">
+        <div class="browser-dots">
+            <div class="dot red"></div>
+            <div class="dot yellow"></div>
+            <div class="dot green"></div>
+        </div>
+        <div class="browser-nav">
+            <div class="nav-btn" onclick="goBackToFolder()">‹</div>
+            <div class="nav-btn">›</div>
+            <div class="nav-btn" onclick="location.reload()">↻</div>
+        </div>
+        <div class="browser-tabs">
+            <div class="browser-tab">
+                <span>✉️ 公司內部郵件系統 - Enterprise Webmail</span>
+            </div>
+        </div>
+        <div class="browser-address-bar">
+            <input type="text" id="urlInput" class="address-input" value="https://mail.bubu-rihe-studio.com/inbox" readonly>
+        </div>
+    </div>
+
+    <div class="page-container">
+        
+        <!-- 頁面一：主郵件系統介面 -->
+        <div id="page1" class="page active">
+            <div class="mail-layout">
+                <div class="sidebar">
+                    <h3>郵件資料夾</h3>
+                    <ul class="sidebar-menu">
+                        <li id="menu-inbox" class="active-menu" onclick="switchFolder('inbox')"><span>收件匣</span><span>(5)</span></li>
+                        <li id="menu-sent" onclick="switchFolder('sent')"><span>寄件備份</span><span>(3)</span></li>
+                        <li id="menu-spam" onclick="switchFolder('spam')"><span>垃圾郵件</span><span>(3)</span></li>
+                    </ul>
+                </div>
+                
+                <div class="mail-list-view">
+                    <!-- 1. 收件匣列表 -->
+                    <div id="list-inbox" class="mail-list-container active-list">
+                        <h3>收件匣 (Inbox)</h3>
+                        
+                        <div class="email-item unread" style="background:#fffaf0; border-left:4px solid #dc2626;" onclick="viewEmail('target-phishing')">
+                            <div>
+                                <span style="color: #991b1b; font-weight: 700;">春風聯名商社 - 採購與打樣部 ⚠️ [急件單據]</span>
+                                <div style="font-size: 14.5px; margin-top: 4px; font-weight: bold; color: #1e293b;">【緊急核對/倒數2小時】Project Loom：首批聯名棉花娃生產報價單與打樣明細 (請立刻確認簽回)</div>
+                            </div>
+                            <span class="tag tag-important">急件 / 附件</span>
+                        </div>
+
+                        <div class="email-item unread" onclick="viewEmail('inbox-jp-partner')">
+                            <div>
+                                <span style="color: #1e293b; font-weight: 600;">佐藤 健太 (Harukaze Corp)</span>
+                                <div style="font-size: 14px; margin-top: 4px; font-weight: normal; color: #475569;">【Project Loom】關於第二階段線上議約會議時間確認與樣品檢收報告</div>
+                            </div>
+                            <span class="tag tag-project">日本專案</span>
+                        </div>
+
+                        <div class="email-item unread" onclick="viewEmail('inbox-legal-loom')">
+                            <div>
+                                <span style="color: #1e293b; font-weight: 600;">法務部 (Legal Counsel)</span>
+                                <div style="font-size: 14px; margin-top: 4px; font-weight: normal; color: #475569;">【進度報告】Project Loom 異業合作備忘錄 (MOU) 審核與下週簽約流程提醒</div>
+                            </div>
+                            <span class="tag tag-project">日本專案</span>
+                        </div>
+
+                        <div class="email-item" onclick="viewEmail('company-normal')">
+                            <div>
+                                <span style="color: #1e293b; font-weight: 600;">人力資源部 (HR)</span>
+                                <div style="font-size: 14px; margin-top: 4px; font-weight: normal; color: #475569;">【調查】布偶日和工作室 2026 年度員工旅遊意願與滿意度抽樣</div>
+                            </div>
+                            <span class="tag tag-normal">一般公告</span>
+                        </div>
+
+                        <!-- 【新增】將原本的博弈抽獎改為更真實的「一卡通電子發票中獎通知」 -->
+                        <div class="email-item" onclick="viewEmail('spam-ipass-invoice')">
+                            <div>
+                                <span style="color: #1e293b; font-weight: 600;">一卡通（iPASS）會員服務中心</span>
+                                <div style="font-size: 14px; margin-top: 4px; font-weight: normal; color: #475569;">【中獎通知】一卡通（iPASS）雲端電子發票中獎通知 - 四獎 4,000 元</div>
+                            </div>
+                            <span class="tag tag-warn">釣魚風險</span>
+                        </div>
+                    </div>
+
+                    <!-- 2. 寄件備份列表 -->
+                    <div id="list-sent" class="mail-list-container">
+                        <h3>寄件備份 (Sent)</h3>
+                        <div class="email-item" onclick="viewEmail('sent-jp-sample')">
+                            <div>
+                                <span style="color: #1e293b; font-weight: 600;">收件人：佐藤 健太 (Harukaze Corp)</span>
+                                <div style="font-size: 14px; margin-top: 4px; font-weight: normal; color: #475569;">RE: 【Project Loom】布偶日和工作室品牌授權範圍與棉花娃客製化樣品清單</div>
+                            </div>
+                            <span class="tag tag-project">日本專案</span>
+                        </div>
+                        <div class="email-item" onclick="viewEmail('sent-legal-reply')">
+                            <div>
+                                <span style="color: #1e293b; font-weight: 600;">收件人：法務部 (Legal Counsel)</span>
+                                <div style="font-size: 14px; margin-top: 4px; font-weight: normal; color: #475569;">RE: 【進度報告】確認下週三 MOU 簽約流程與財務核對事項</div>
+                            </div>
+                            <span class="tag tag-project">日本專案</span>
+                        </div>
+                        <div class="email-item" onclick="viewEmail('sent-normal')">
+                            <div>
+                                <span style="color: #1e293b; font-weight: 600;">收件人：全體同仁 (All staff)</span>
+                                <div style="font-size: 14px; margin-top: 4px; font-weight: normal; color: #475569;">公告：布偶日和工作室第二季工作目標與客製化流程調整</div>
+                            </div>
+                            <span class="tag tag-normal">已發送</span>
+                        </div>
+                    </div>
+
+                    <!-- 3. 垃圾郵件列表 -->
+                    <div id="list-spam" class="mail-list-container">
+                        <h3>垃圾郵件 (Spam)</h3>
+                        <div class="email-item" onclick="viewEmail('spam-verify')">
+                            <div>
+                                <span style="color: #1e293b; font-weight: 600;">Meta 帳戶安全中心</span>
+                                <div style="font-size: 14px; margin-top: 4px; font-weight: normal; color: #475569;">[警告] 您的粉專帳號存在異常登入，請在15分鐘內點擊驗證</div>
+                            </div>
+                            <span class="tag tag-important">釣魚風險</span>
+                        </div>
+                        <div class="email-item" onclick="viewEmail('spam-delivery')">
+                            <div>
+                                <span style="color: #1e293b; font-weight: 600;">國際快遞服務中心</span>
+                                <div style="font-size: 14px; margin-top: 4px; font-weight: normal; color: #475569;">【關稅繳納通知】您的樣品包裹因欠缺申報單遭海關扣留，請立即線上補件</div>
+                            </div>
+                            <span class="tag tag-warn">釣魚風險</span>
+                        </div>
+                        <div class="email-item" onclick="viewEmail('spam-bank')">
+                            <div>
+                                <span style="color: #1e293b; font-weight: 600;">第一商業銀行 網銀系統</span>
+                                <div style="font-size: 14px; margin-top: 4px; font-weight: normal; color: #475569;">【系統更新】您的企業網路銀行憑證即將到期，請立即連線更換</div>
+                            </div>
+                            <span class="tag tag-important">釣魚風險</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 頁面二：郵件內容展示頁 -->
+        <div id="page2" class="page">
+            <button class="btn-back-list" onclick="goBackToFolder()">‹ 返回郵件列表</button>
+            <div id="email-detail-content"></div>
+        </div>
+
+        <!-- 頁面三：應對策略解析與結果 -->
+        <div id="page3" class="page">
+            <div id="resultContent" class="result-screen"></div>
+        </div>
+        
+    </div>
+</div>
+
+<script>
+    function enterMailSystem() {
+        const introScreen = document.getElementById('intro-screen');
+        const browserWindow = document.getElementById('browser-window');
+        introScreen.style.opacity = '0';
+        introScreen.style.transform = 'translateY(-10px)';
+        introScreen.style.transition = 'all 0.3s ease';
+        setTimeout(() => {
+            introScreen.style.display = 'none';
+            browserWindow.style.display = 'flex';
+        }, 300);
+    }
+
+    const emailDatabase = {
+        'target-phishing': {
+            subject: '【緊急核對/倒數2小時】Project Loom：首批聯名棉花娃生產報價單與打樣明細 (請立刻確認簽回)',
+            senderName: '春風聯名商社 - 採購與打樣部',
+            senderEmail: 'order@harukaze-plushs.co.jp',
+            alertMsg: '⚠️ 網域異常警告：發件人網域為「...plushs.co.jp」（多了一個 s），並非春風商社官方標準網域！',
+            url: 'https://mail.bubu-rihe-studio.com/mail/view?id=9487&sec=high',
+            body: `
+                <div class="urgency-banner">
+                    <div>
+                        <b style="color:#991b1b; font-size:15px;">⏳ 工廠生產排班最後倒數時限！</b>
+                        <div style="font-size:13px; color:#7f1d1d; margin-top:2px;">若未於今日 14:00 前完成單據核對，首批 2,000 隻聯名娃將趕不上秋季展會交期。</div>
+                    </div>
+                    <div class="timer" id="countdown-timer">01:59:42</div>
+                </div>
+
+                <p>布偶日和工作室 營運與行政專員，您好：</p>
+                <p style="margin-top: 12px;">關於 Project Loom 聯名合作案，東京製造工廠已完成首批 15cm / 20cm 客製化棉花娃的「布料開模與生產成本最終報價單」。為配合下週正式 MOU 簽約後的生產流程，<b>佐藤總監指示我方需於今日下午排班截止前，與您完成最終單據金額核對</b>。</p>
+                <p style="margin-top: 12px;">由於本次單據包含工廠詳細的布料打樣圖稿、電繡針數報價與各品項單價，檔案體積較大，我們已將其封裝為自解壓縮單據檔（如下方附件）。</p>
+                
+                <div class="attachment-card">
+                    <div style="display:flex; align-items:center; gap:15px;">
+                        <div class="attachment-icon">📁</div>
+                        <div class="attachment-info">
+                            <h5>2026_Project_Loom_合作報價單與打樣明細.exe</h5>
+                            <p>檔案大小：4.8 MB | 格式：自解壓縮單據包 (EXE / VBS)</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-pay" style="background:#ea580c; padding:10px 18px; font-size:13px;" onclick="triggerAction('exec')">⚡ 點此下載並開啟附件</button>
+                </div>
+
+                <p style="margin-top: 14px;"><b style="color:#b91c1c; font-size:15px;">【緊急處理要求 - 請勿延誤】</b><br>
+                由於日本工廠即將於下午 14:00 確定下個月的生產線排程，請您<b>立刻下載附件並雙擊開啟</b>，核對第二頁的「行政手續費與布料單價」是否無誤。確認後請直接回覆本信，若因延誤核對導致交期延宕，將影響雙方聯名發布會時程！</p>
+                <div class="email-signature">
+                    <b>春風聯名商社 Harukaze Plush Co., Ltd.</b> | 東京本部 採購與打樣製造部
+                </div>
+            `,
+            scaffold: `
+                <strong>💡 OCF SSD 資安小幫手（行政人員專屬破綻分析）：</strong>
+                <ul>
+                    <li><b>針對日常慣性的攻擊：</b> 行政人員每天都要開報價單、履歷與規格書。黑客故意使用 Project Loom 專案名稱與「趕交期」時間壓力，誘使您放下戒心。</li>
+                    <li><b>致命副檔名偽裝 (.exe/.vbs)：</b> 正常的商業報價單、合約單據一律是 PDF、XLSX 或官方雲端連結。<b>嚴禁點開任何 EXE、VBS、SCR 或 BAT 結尾的單據附件！</b></li>
+                    <li><b>網域偽裝 (Typosquatting)：</b> 發件網域 <code>harukaze-plushs.co.jp</code> 比佐藤總監的正確網域多了一個 <b>s</b>。</li>
+                </ul>
+            `,
+            actions: {
+                exec: {
+                    type: 'fail',
+                    title: '🚨 致命失誤：您的電腦已感染「特洛伊木馬與勒索病毒 (Ransomware)」！',
+                    desc: `<b>應對策略失誤分析：</b><br>
+                    您點擊下載並開啟了偽裝成報價單的執行檔！這根本不是什麼單據，而是一隻強大的特洛伊木馬與勒索病毒！在您雙擊檔案的瞬間，工作室電腦內的<b>客戶棉花娃訂單、設計圖稿、財務帳冊以及連線的共享雲端硬碟遭到全數加密封鎖</b>，黑客勒索高額比特幣！<br><br>
+                    <b>OCF SSD 防身術指導：</b> 
+                    行政人員必須對「副檔名」保持絕對敏感！無論信件說得有多緊急、寄件人看起來多眼熟，<b>正當的商務報價單與請款單絕不可是可執行檔</b>。遇到這類副檔名，絕對不可下載執行！`
+                },
+                verify: {
+                    type: 'success',
+                    title: '🏅 恭喜！您以「另闢獨立管道求證」成功識破假單據木馬！',
+                    desc: `<b>應對策略成功分析：</b><br>
+                    您保持了卓越的行政守門員警覺心！面對倒數計時與工廠催件，您沒有盲目點開附件。您遵守「另闢獨立管道驗證 (Out-of-band verification)」原則——透過既有的電話或官方 Slack 管道，向日本春風商社佐藤總監與內部法務主管求證。佐藤總監確認「工廠從未寄出此報價單，且官方文件一律以 PDF 傳送」，成功為工作室化解了一場勒索病毒浩劫！<br><br>
+                    <b>OCF SSD 防身術指導：</b> 
+                    遇到可疑格式或更改常規流程的單據，暫停半分鐘，改用「原郵件以外的第二通訊管道（打電話、傳官方通訊軟體）」跟當事人核對，是破解社交工程最穩妥的方法。`
+                },
+                report: {
+                    type: 'success',
+                    title: '🛡️ 頂級企業資安公民！您「主動通報 IT」，啟動全網免疫防禦！',
+                    desc: `<b>應對策略成功分析：</b><br>
+                    這是最優異的處置策略！您不僅沒有被「趕交期」的藉口騙倒點開木馬，更主動將這封攜帶惡意附件的信件<b>通報給 IT 與資安團隊</b>。資安部門迅速在端點防護系統 (EDR) 中將該執行檔案的雜湊值標記為勒索病毒，並於防火牆全面黑名單封鎖了 <code>harukaze-plushs.co.jp</code> 假網域，及時保護了工作室其他可能點開該附件的同仁！<br><br>
+                    <b>OCF SSD 防身術指導：</b> 
+                    資安是集體戰。第一線行政人員發現釣魚與木馬信件時，主動通報（Incident Reporting）能協助組織快速分析攻擊樣態，築起全體防禦網。`
+                },
+                inspect: {
+                    type: 'success',
+                    title: '🔍 技術與沙盒檢視報告：雲端沙盒成功捕捉勒索木馬連線！',
+                    desc: `<b>應對策略進階分析：</b><br>
+                    您選擇了進階的「雲端安全沙盒隔離檢視」。您沒有在自己的電腦下載開啟，而是將附件上傳至雲端隔離沙盒環境。分析報告立刻顯示驚人結果：<b>該檔案名雖偽裝成「合作報價單」，實際上是一個封裝了 PowerShell 惡意腳本的自解壓縮木馬！</b> 檔案會在後台嘗試加密硬碟，並與俄羅斯中繼站 (C&C Server) 建立連線。同時檢視郵件標頭，發現發件網域比官方多了一個 's'，DKIM 簽章失敗！<br><br>
+                    <b>OCF SSD 防身術指導：</b> 
+                    對於進階行政與營運人員，利用雲端沙盒預覽可疑文件、檢視郵件原始標頭，能在零風險的前提下，以明確的技術證據揭穿黑客攻擊。`
+                }
+            }
+        },
+        'inbox-jp-partner': {
+            subject: '【Project Loom】關於第二階段線上議約會議時間確認與樣品檢收報告',
+            senderName: '佐藤 健太 (Harukaze Corp)',
+            senderEmail: 'k.sato@harukaze-plush.co.jp',
+            alertMsg: '安全網域：來自日本合作夥伴（春風聯名商社）的官方合法企業信箱。',
+            url: 'https://mail.bubu-rihe-studio.com/mail/view?id=8821',
+            body: `
+                <p>布偶日和工作室 營運與行政團隊 御中：</p>
+                <p style="margin-top: 12px;">您好，我是春風聯名商社的海外事業部負責人佐藤。上週收到貴團隊寄達的「15cm/20cm 客製化棉花娃」實體樣品，我們經營團隊對樣品的電繡工藝與骨架手感給予極高的評價！</p>
+                <p style="margin-top: 12px;">關於 Project Loom 的第二階段品牌授權與併購細節，我們希望能在本週四（7/5）下午 15:00 進行一場線上視訊會議，確認最後的合作備忘錄 (MOU) 條文。再請回覆確認貴團隊的時間是否方便。</p>
+                <div class="email-signature"><b>佐藤 健太 Kenta Sato</b> | 海外事業總監<br>春風聯名商社 Harukaze Plush Co., Ltd.</div>
+            `,
+            scaffold: `
+                <strong>💡 OCF SSD 資安小幫手：</strong>
+                <ul><li><b>正常商務溝通：</b> 發件人使用日本公司網域 <code>harukaze-plush.co.jp</code>，內容合乎專案進度，無異常施壓或要求下載可疑檔案。</li></ul>
+            `,
+            actions: {
+                exec: { type: 'success', title: '✅ 正常的商務操作', desc: '這是一封合法的合作夥伴郵件，直接回覆確認會議時間是標準且正確的業務處理流程。' },
+                verify: { type: 'success', title: '🛡️ 嚴謹的查證態度', desc: '雖然這是正常郵件，但您在處理重要專案會議前與團隊內部確認進度，是非常穩健的工作習慣。' },
+                report: { type: 'warn', title: '⚠️ 通報誤判提醒', desc: '您將這封正常郵件通報為釣魚郵件。IT 部門檢視後確認這是安全的商務信件。在保持警覺的同時，也請多觀察發件網域是否與官方一致，避免影響正常業務往來。' },
+                inspect: { type: 'success', title: '🔍 技術檢視正常', desc: '郵件標頭顯示 SPF/DKIM 驗證通過，發信 IP 確實來自春風聯名商社的官方郵件伺服器。' }
+            }
+        },
+        'inbox-legal-loom': {
+            subject: '【進度報告】Project Loom 異業合作備忘錄 (MOU) 審核與下週簽約流程提醒',
+            senderName: '法務部 (Legal Counsel)',
+            senderEmail: 'legal@bubu-rihe-studio.com',
+            alertMsg: '安全網域：此發件人來自公司內部的合法正確網域。',
+            url: 'https://mail.bubu-rihe-studio.com/mail/view?id=8824',
+            body: `
+                <p>營運團隊與各主管好：</p>
+                <p style="margin-top: 12px;">針對 Project Loom 日本跨國合作案，法務部已完成日方提出的備忘錄（MOU）中英雙語版本初審。目前合約條文皆合乎兩國商務法規。</p>
+                <p style="margin-top: 12px;"><b style="color:#0369a1;">【資安與流程重要提醒 - 行政同仁請留意】</b><br>
+                近期跨國供應商往來頻繁，請行政與營運夥伴記住公司鐵律：<b>本工作室與日方所有正宗報價單據、MOU 合約，一律僅透過標準 PDF 格式或 Google Workspace 官方雲端連結傳送，絕對不會寄送 EXE、VBS 等執行檔！</b> 遇任何可疑單據格式，請立即停止開啟並通報資安部。</p>
+                <div class="email-signature"><b>法務與合規部 Legal & Compliance</b> | 布偶日和工作室 Bubu Rihe Studio Co., Ltd.</div>
+            `,
+            scaffold: `
+                <strong>💡 OCF SSD 資安小幫手（破局關鍵線索！）：</strong>
+                <ul><li><b>制度安全防線：</b> 法務部在這封信中清楚重申：<b>「公司與日方單據一律是 PDF，絕不會寄 EXE 執行檔！」</b> 若對照那封要求下載 EXE 報價單的工廠信件，立刻就能推翻騙局！</li></ul>
+            `,
+            actions: {
+                exec: { type: 'success', title: '✅ 遵照內部流程', desc: '您認真閱讀並遵照了法務部的提醒，這將成為您稍後抵禦「惡意報價單木馬」最重要的心智防線！' },
+                verify: { type: 'success', title: '📞 跨部門確認', desc: '您向法務部再三確認了單據傳輸規範，確保全體行政團隊資訊同步。' },
+                report: { type: 'warn', title: '⚠️ 內部公告誤報', desc: '這是公司內部法務部發出的合法提醒郵件，請留意內部官方網域的正確性。' },
+                inspect: { type: 'success', title: '🔍 內部簽章有效', desc: '數位簽章驗證無誤，這是來自內部伺服器的安全通告。' }
+            }
+        },
+        'company-normal': {
+            subject: '【調查】布偶日和工作室 2026 年度員工旅遊意願與滿意度抽樣',
+            senderName: '人力資源部 (HR)',
+            senderEmail: 'hr@bubu-rihe-studio.com',
+            alertMsg: '安全網域：此發件人來自公司內部的合法正確網域。',
+            url: 'https://mail.bubu-rihe-studio.com/mail/view?id=2231',
+            body: `<p>各位夥伴好：</p><p style="margin-top: 12px;">為規劃今年度的員工聚餐與秋季團體旅遊，HR 團隊設計了一份簡短的意見調查問卷，以了解大家期望的目的地與活動型態。</p><p style="margin-top: 12px;">請於本週五下班前抽空填寫，以便我們統計人數並與旅行社洽談後續事宜。感謝大家的配合！</p><div class="email-signature"><b>人力資源與行政部 HR & Admin</b> | 布偶日和工作室</div>`,
+            scaffold: `<strong>💡 OCF SSD 資安小幫手：</strong><ul><li><b>正常的組織溝通：</b> 發件網域與公司官方吻合，無錯字。沒有異常時間壓迫，不涉及可疑附件。</li></ul>`,
+            actions: {
+                exec: { type: 'success', title: '✅ 正常參與調查', desc: '點擊公司內部合法網域的問卷，順利完成員工旅遊意願調查。' },
+                verify: { type: 'success', title: '🛡️ 謹慎的查證', desc: '您向 HR 同事口頭確認了今年有辦理問卷活動，確認無誤後再填寫。' },
+                report: { type: 'warn', title: '⚠️ 正常信件誤報', desc: '這是人資部門發出的例行通知，並非惡意釣魚。' },
+                inspect: { type: 'success', title: '🔍 安全通告', desc: '標頭與網域皆為內部安全合法來源。' }
+            }
+        },
+        'spam-ipass-invoice': {
+            subject: '【中獎通知】一卡通（iPASS）雲端電子發票中獎通知 - 四獎 4,000 元',
+            senderName: '一卡通（iPASS）會員服務中心',
+            senderEmail: 'service@ipass-invoice-tw.com',
+            alertMsg: '危險網域：發件人網址並非一卡通官方網域（i-pass.com.tw 或 e-invoice.nat.gov.tw），且信中包含索取銀行資料的連結。',
+            url: 'https://mail.bubu-rihe-studio.com/mail/view?id=0058',
+            body: `
+                <p>親愛的會員您好：</p>
+                <p style="margin-top: 12px;">本通知由 <b>一卡通（iPASS）</b> 系統自動寄發，提供您 民國114年9月至12月期間之電子發票對獎結果與帳務摘要，敬請查閱。</p>
+                <p style="margin-top: 12px;"><b>一、對獎作業說明</b><br>本期統一發票已依財政部公布之中獎號碼完成例行對獎作業。您於上述期間使用 一卡通（iPASS） 付款所開立之雲端電子發票，均已納入本次對獎範圍，相關資料亦已同步更新至會員中心供查詢。</p>
+                <p style="margin-top: 12px;"><b>二、發票資訊摘要</b><br>發票號碼：QE-52941786<br>發票類型：一卡通（iPASS）電子發票<br>對應獎別：<b>四獎</b><br>中獎金額：<span class="highlight-danger" style="color:#ea580c; background:#ffedd5;">新臺幣 4,000 元</span></p>
+                <p style="margin-top: 12px;"><b>三、資料查詢與確認</b><br>請登入 「 一卡通發票整合平台 」 查閱完整發票與帳務資訊，並確認：<br>1. 會員基本資料（姓名、聯絡方式）是否正確<br>2. 綁定之銀行帳戶或信用卡是否仍為有效狀態</p>
+                <p style="text-align:center; margin-top:25px;">
+                    <button class="btn btn-pay" style="background:#0ea5e9;" onclick="triggerAction('exec')">💳 登入 一卡通發票整合平台 確認領獎帳戶</button>
+                </p>
+                <p style="margin-top: 25px; font-size: 12px; color: #94a3b8;"><b>四、提醒事項</b><br>建議定期登入會員中心確認帳戶與電子發票狀態；如近期有銀行帳戶或信用卡異動，請同步更新會員資料。<br>本郵件為系統自動發送之通知信件，僅供帳務資訊參考，請勿直接回覆。<br><br>一卡通（iPASS）會員服務中心<br>中華民國115年3月5日</p>
+            `,
+            scaffold: `
+                <strong>💡 OCF SSD 資安小幫手（發票中獎釣魚解析）：</strong>
+                <ul>
+                    <li><b>逼真的在地化陷阱：</b> 詐騙者利用「一卡通」與「財政部電子發票」等公信力極高的機構，並設定合理的 4,000 元小額獎金，大幅降低您的防備心。</li>
+                    <li><b>個資劫持陷阱：</b> 信中刻意要求您「確認綁定的銀行帳戶或信用卡」，目的就是引導您進入假網頁輸入信用卡號碼或網銀密碼。</li>
+                    <li><b>網域辨識：</b> 一卡通的官方網域為 <code>i-pass.com.tw</code>，而財政部電子發票為 <code>e-invoice.nat.gov.tw</code>。信件的發件網域明顯是為了混淆而註冊的假網域。</li>
+                </ul>
+            `,
+            actions: {
+                exec: { type: 'fail', title: '🚨 警告：信用卡卡號與銀行帳戶遭受釣魚竊取！', desc: '您點擊了假一卡通平台的連結，並輸入了信用卡號與驗證碼，詐騙集團立即利用您的卡號進行高額盜刷！<br><br><b>OCF SSD 防身術指導：</b> 收到任何電子發票中獎通知，<b>絕對不要點擊信件內的連結去登錄銀行帳號</b>。請直接打開您手機裡官方的「雲端發票 App」或「一卡通 App」進行確認。' },
+                verify: { type: 'success', title: '🏅 正確防衛：使用官方 App 獨立查證', desc: '您沒有點擊信件內的按鈕，而是直接拿起手機打開財政部的「統一發票對獎 App」與「一卡通官方 App」，發現根本沒有中獎紀錄，成功識破這是騙取信用卡號的釣魚信！' },
+                report: { type: 'success', title: '🛡️ 通報垃圾郵件封鎖', desc: '您將其通報為釣魚郵件，郵件系統自動升級了過濾規則，成功阻擋該假冒一卡通網域的後續信件。' },
+                inspect: { type: 'success', title: '🔍 揭穿釣魚連結', desc: '將滑鼠懸停檢視按鈕，發現實際導向的網址根本不是財政部或一卡通官網，而是一個架設在海外的假網頁，成功識破！' }
+            }
+        },
+        'sent-jp-sample': {
+            subject: 'RE: 【Project Loom】布偶日和工作室品牌授權範圍與棉花娃客製化樣品清單',
+            senderName: '我 (ops@bubu-rihe-studio.com)',
+            senderEmail: 'k.sato@harukaze-plush.co.jp',
+            alertMsg: '安全網域：這是您發送給日本商務夥伴的正式郵件。',
+            url: 'https://mail.bubu-rihe-studio.com/mail/sent/view?id=1198',
+            body: `<p>佐藤總監 您好：</p><p style="margin-top: 12px;">感謝您的來信。附件是本工作室 2026 年度最新客製化棉花娃（含打樣打版說明與布料材質檢驗報告）的樣品規格書。另外，3 隻針對本次聯名合作設計的實體示範娃，已於昨日透過國際快遞寄出。</p><p style="margin-top: 12px;">關於第二階段線上議約，我們非常樂意於本週四（7/5）下午 15:00 進行視訊會議。期待與貴公司的深化合作。</p><div class="email-signature"><b>營運與行政專員 Operations Specialist</b> | 布偶日和工作室</div>`,
+            scaffold: `<strong>💡 OCF SSD 資安小幫手：</strong><ul><li>這是您先前發出的正常專案對外溝通信件。這證明了 Project Loom 是真實存在的專案，詐騙集團往往就是蒐集這類情報來量身打造偽冒木馬郵件。</li></ul>`,
+            actions: {
+                exec: { type: 'success', title: '✅ 正常備份檢閱', desc: '檢閱過往的商務通訊紀錄，掌握專案歷史資訊。' },
+                verify: { type: 'success', title: '✅ 專案核對', desc: '確認寄出的樣品清單與物流編號一致。' },
+                report: { type: 'warn', title: '⚠️ 備份郵件無需通報', desc: '這是您自己發出的寄件備份，無需進行通報。' },
+                inspect: { type: 'success', title: '🔍 發送紀錄正常', desc: '郵件已安全送達對方的官方伺服器。' }
+            }
+        },
+        'sent-legal-reply': {
+            subject: 'RE: 【進度報告】確認下週三 MOU 簽約流程與財務核對事項',
+            senderName: '我 (ops@bubu-rihe-studio.com)',
+            senderEmail: 'legal@bubu-rihe-studio.com',
+            alertMsg: '安全網域：這是您發送給內部法務部的確認信。',
+            url: 'https://mail.bubu-rihe-studio.com/mail/sent/view?id=1202',
+            body: `<p>法務部夥伴好：</p><p style="margin-top: 12px;">收到，營運與行政團隊已將 MOU 審核要點轉發給專案小組成員閱讀。我們會嚴格遵照內部規範，往來單據只接收 PDF 檔案，絕不點擊可疑執行檔。</p><p style="margin-top: 12px;">感謝法務團隊的細心把關！</p><div class="email-signature"><b>營運與行政專員 Operations Specialist</b> | 布偶日和工作室</div>`,
+            scaffold: `<strong>💡 OCF SSD 資安小幫手：</strong><ul><li>您在備份信件中親口承諾了「只接收 PDF，不點可疑執行檔」，這再次強化了您面對突發緊急單據時，應有的堅守合規原則！</li></ul>`,
+            actions: {
+                exec: { type: 'success', title: '✅ 堅守合規紀錄', desc: '這份回信紀錄正是您遵守公司資安準則的最佳證明。' },
+                verify: { type: 'success', title: '✅ 跨組認知同步', desc: '確認法務與營運團隊對單據時程與格式規範完全一致。' },
+                report: { type: 'warn', title: '⚠️ 備份郵件無需通報', desc: '這是您自己發出的信件。' },
+                inspect: { type: 'success', title: '🔍 安全簽章通過', desc: '內部通訊加密紀錄完整。' }
+            }
+        },
+        'sent-normal': {
+            subject: '公告：布偶日和工作室第二季工作目標與客製化流程調整',
+            senderName: '我 (ops@bubu-rihe-studio.com)',
+            senderEmail: 'all-staff@bubu-rihe-studio.com',
+            alertMsg: '安全網域：這是您發送給內部團隊的正式公告信。',
+            url: 'https://mail.bubu-rihe-studio.com/mail/sent/view?id=1205',
+            body: `<p>各位團隊夥伴好：</p><p style="margin-top: 12px;">感謝大家在第一季的努力。針對我們工作室接下來的客製化棉花娃業務與體驗式教學課程，我們預計在第二季微調核心策略，優化整體的排單流程與異業合作案。</p><p style="margin-top: 12px;">詳細的專案時程表與任務分配，已上傳至共享雲端硬碟，請各組負責人於本週五前確認完畢。</p><div class="email-signature"><b>營運與行政專員 Operations Specialist</b> | 布偶日和工作室</div>`,
+            scaffold: `<strong>💡 OCF SSD 資安小幫手：</strong><ul><li>日常業務公告，附帶明確的內部共享連結，不會使用可疑執行檔或隔離審查等極端字眼。</li></ul>`,
+            actions: {
+                exec: { type: 'success', title: '✅ 正常公告', desc: '業務目標與流程調整已順利通知全體團隊。' },
+                verify: { type: 'success', title: '✅ 雲端權限檢閱', desc: '確認共享雲端硬碟的存取權限設定安全正確。' },
+                report: { type: 'warn', title: '⚠️ 備份郵件無需通報', desc: '這是您自己發出的信件。' },
+                inspect: { type: 'success', title: '🔍 發送正常', desc: '內部通訊紀錄無異常。' }
+            }
+        },
+        'spam-verify': {
+            subject: '[警告] 您的粉專帳號存在異常登入，請在15分鐘內點擊驗證',
+            senderName: 'Meta 帳戶安全中心',
+            senderEmail: 'security-alert@meta-support-desk.net',
+            alertMsg: '危險網域：偽裝成官方，但真正網域是 meta-support-desk.net 而非 facebook.com 或 meta.com。',
+            url: 'https://mail.bubu-rihe-studio.com/mail/spam/view?id=0042',
+            body: `<p>Meta 粉絲專頁用戶您好：</p><p style="margin-top: 12px;">我們發現您的工作室粉絲專頁近期有來自未授權 IP 的異常登入嘗試。為了保護您的智慧財產與粉絲隱私，我們已暫時限制您的部分管理權限。</p><p style="margin-top: 12px;">請在 <span class="highlight-danger">15分鐘內</span> 點擊下方連結進行安全驗證，否則您的粉絲專頁將會被 <span class="highlight-danger">永久刪除且無法恢復</span>。</p><p style="text-align:center; margin-top:25px;"><button class="btn btn-pay" style="background:#dc2626;" onclick="triggerAction('exec')">進入 Meta 安全驗證中心</button></p>`,
+            scaffold: `<strong>💡 OCF SSD 資安小幫手：</strong><ul><li><b>恐嚇手法 (Scareware)：</b> 詐騙者最喜歡使用「即將被永久刪除」引發恐慌，強迫您在有限時間內做出錯誤決策。</li><li><b>官方渠道驗證：</b> 請直接開啟瀏覽器手動輸入官方網址進入後台檢查，千萬不要點擊信件內的超連結。</li></ul>`,
+            actions: {
+                exec: { type: 'fail', title: '🚨 警告：工作室社群粉專帳號密碼遭受外洩與劫持！', desc: '您點擊了假驗證按鈕並輸入了帳號密碼，黑客立刻接管了工作室的粉絲專頁！' },
+                verify: { type: 'success', title: '🏅 獨立官網查證成功', desc: '您自行開啟瀏覽器登入 Meta 官方後台，檢查「帳號安全中心」，確認毫無異常登入紀錄，成功破除恐嚇詐騙！' },
+                report: { type: 'success', title: '🛡️ 通報並封鎖惡意網域', desc: '轉發給資安部門，IT 團隊立即封鎖該假冒的釣魚網域。' },
+                inspect: { type: 'success', title: '🔍 網域與標頭檢視破案', desc: '檢查發件人真實網址與連結目標，確認完全不是官方伺服器，輕易識破偽冒！' }
+            }
+        },
+        'spam-delivery': {
+            subject: '【關稅繳納通知】您的樣品包裹因欠缺申報單遭海關扣留，請立即線上補件',
+            senderName: '國際快遞服務中心',
+            senderEmail: 'customs-notice@global-express-tracking.com',
+            alertMsg: '危險網域：偽裝成知名快遞，誘導點擊假關稅繳費連結，企圖竊取信用卡號。',
+            url: 'https://mail.bubu-rihe-studio.com/mail/spam/view?id=0043',
+            body: `<p>客戶您好：</p><p style="margin-top: 12px;">您有一件由日本寄往工作室的棉花娃打樣包裹（單號：#JP-88291），因欠缺「進口關稅申報單」及 USD $15 元手續費，目前已遭海關扣留。</p><p style="margin-top: 12px;">請於 <span class="highlight-danger">12小時內點擊下方關稅申報入口</span>，填寫包裹收件人資料並線上支付關稅手續費，逾期包裹將遭退回或銷毀。</p><p style="text-align:center; margin-top:25px;"><button class="btn btn-pay" style="background:#ea580c;" onclick="triggerAction('exec')">💳 前往線上申報與繳納關稅</button></p>`,
+            scaffold: `<strong>💡 OCF SSD 資安小幫手：</strong><ul><li><b>包裹釣魚 (Smishing/Phishing)：</b> 利用跨國合作常有包裹往來的習慣，以「海關扣留、繳手續費」誘騙信用卡卡號與到期日。</li><li><b>主動查詢原則：</b> 嚴禁點擊信件內的繳費連結！應自行前往 DHL / FedEx 等正規快遞官網輸入單號查詢狀態。</li></ul>`,
+            actions: {
+                exec: { type: 'fail', title: '🚨 致命失誤：公司信用卡卡號遭釣魚網站竊取盜刷！', desc: '您點擊了假關稅繳費網頁並輸入了公務信用卡資料與 OTP 驗證碼，黑客立即在海外網站進行鉅額盜刷！<br><br><b>OCF SSD 防身術指導：</b> 任何以「包裹扣留」、「小額關稅繳納」為由要求線上刷卡的信件，極高機率是信用卡釣魚。請自行至物流官網確認單號。' },
+                verify: { type: 'success', title: '🏅 獨立快遞官網查詢確認', desc: '您前往正規快遞官方網站，手動輸入包裹單號查詢，系統顯示毫無此異常扣留紀錄，確認是詐騙！' },
+                report: { type: 'success', title: '🛡️ 通報資安進行釣魚網址封鎖', desc: '將可疑信件通報 IT 部門，資安人員立即將該假關稅繳費網址加入防火牆黑名單！' },
+                inspect: { type: 'success', title: '🔍 網址跳轉分析成功！', desc: '透過 URL X-Ray 工具分析按鈕連結，發現實際指向的是一個設在海外的可疑刷卡收單頁面，成功識破！' }
+            }
+        },
+        'spam-bank': {
+            subject: '【系統更新】您的企業網路銀行憑證即將到期，請立即連線更換',
+            senderName: '第一商業銀行 網銀系統',
+            senderEmail: 'service@first-bank-security-update.com',
+            alertMsg: '危險網域：假冒知名銀行，真實銀行絕對不會用外部可疑網域寄送更新憑證連結。',
+            url: 'https://mail.bubu-rihe-studio.com/mail/spam/view?id=0045',
+            body: `<p>親愛的企業網銀客戶：</p><p style="margin-top: 12px;">由於金融資安法規升級，您工作室專屬的「企業網路銀行放行憑證」將於今日 23:59 到期失效。</p><p style="margin-top: 12px;">為避免明日無法發放薪資或進行廠商轉帳，請立即點擊下方專屬安全登入通道，完成線上憑證展期。</p><p style="text-align:center; margin-top:25px;"><button class="btn btn-pay" style="background:#dc2626;" onclick="triggerAction('exec')">連線至網銀更新憑證</button></p>`,
+            scaffold: `<strong>💡 OCF SSD 資安小幫手：</strong><ul><li><b>銀行鐵律：</b> 任何金融機構，絕不會主動透過電子郵件發送「超連結」要求客戶登入帳號密碼或展期憑證。</li><li><b>網域辨識：</b> 詐騙者常申請類似 <code>bank-security-update.com</code> 的假網址騙取信任，操作網銀務必自行輸入網址。</li></ul>`,
+            actions: {
+                exec: { type: 'fail', title: '🚨 警告：企業網銀帳號密碼與放行權限遭外洩！', desc: '您點擊了假銀行的網址並登入了帳號密碼與憑證，黑客立刻在夜間登入真實網銀，將工作室帳戶內的流動資金盜領一空！<br><br><b>OCF SSD 防身術指導：</b> 銀行絕對不會寄送網址要求客戶登入更新憑證或密碼。辦理網銀業務，務必自行從瀏覽器書籤或輸入官方網址登入。' },
+                verify: { type: 'success', title: '🏅 致電銀行客服專線確認', desc: '您自行撥打存摺上的銀行官方客服專線詢問，客服表示憑證到期會在「網銀登入後的系統公告」提示，絕對不會發郵件連結，成功避免資金被盜！' },
+                report: { type: 'success', title: '🛡️ 通報金管與資安單位', desc: '轉發給資安部與銀行反詐騙信箱，銀行端立即向警政機構通報停止該假冒網域的解析。' },
+                inspect: { type: 'success', title: '🔍 SSL 憑證與 DNS 標頭分析', desc: '透過檢視該網站的 SSL 安全憑證與 DNS 註冊資料，發現該網域僅註冊不到 3 天且註冊人位於海外，徹底識破釣魚圈套！' }
+            }
+        }
+    };
+
+    function switchFolder(folderName) {
+        document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active-menu'));
+        document.getElementById('menu-' + folderName).classList.add('active-menu');
+        
+        document.querySelectorAll('.mail-list-container').forEach(list => list.classList.remove('active-list'));
+        document.getElementById('list-' + folderName).classList.add('active-list');
+        
+        document.getElementById('urlInput').value = `https://mail.bubu-rihe-studio.com/${folderName}`;
+        
+        document.getElementById('page1').classList.add('active');
+        document.getElementById('page2').classList.remove('active');
+        document.getElementById('page3').classList.remove('active');
+    }
+
+    let currentEmailKey = '';
+    let timerInterval;
+
+    function viewEmail(emailKey) {
+        currentEmailKey = emailKey;
+        const mailData = emailDatabase[emailKey];
+        if (!mailData) return;
+
+        document.getElementById('urlInput').value = mailData.url;
+
+        const consoleHtml = `
+            <div class="action-console">
+                <div class="console-title">🛡️ OCF SSD 多元資安應對決策控制台 (請選擇您的處置策略)：</div>
+                <div class="action-grid">
+                    <button class="btn-action btn-exec" onclick="triggerAction('exec')">
+                        <span>🚀 1. 直接順從執行指令</span>
+                        <span class="sub">下載開啟附件、依指示點擊連結或繳費</span>
+                    </button>
+                    <button class="btn-action btn-verify" onclick="triggerAction('verify')">
+                        <span>📞 2. 另闢獨立管道驗證</span>
+                        <span class="sub">透過既有電話、官方Slack或官網求證</span>
+                    </button>
+                    <button class="btn-action btn-report" onclick="triggerAction('report')">
+                        <span>🛡️ 3. 通報 IT 資安團隊</span>
+                        <span class="sub">主動標記可疑附件並轉發資安組進行隔離</span>
+                    </button>
+                    <button class="btn-action btn-inspect" onclick="triggerAction('inspect')">
+                        <span>🔍 4. 技術與雲端沙盒檢視</span>
+                        <span class="sub">在雲端沙盒預覽附件或檢視原始郵件標頭</span>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('email-detail-content').innerHTML = `
+            <div class="email-detail-header">
+                <div class="email-subject">${mailData.subject}</div>
+                <div class="email-meta">
+                    <strong>發件人：</strong> ${mailData.senderName} 
+                    <span class="email-sender-address">&lt;${mailData.senderEmail}&gt;</span>
+                    <span class="alert-icon" title="${mailData.alertMsg}">!</span>
+                </div>
+            </div>
+            <div class="email-body">${mailData.body}</div>
+            
+            ${consoleHtml}
+            
+            <div class="scaffold-wrapper">
+                <button class="btn-hint" onclick="toggleScaffold(this)">
+                    <span>💡 點此展開 OCF SSD 資安小幫手（自我監控與分析提示）</span>
+                    <span>▼</span>
+                </button>
+                <div class="scaffold-box">${mailData.scaffold}</div>
+            </div>
+        `;
+
+        document.getElementById('page1').classList.remove('active');
+        document.getElementById('page2').classList.add('active');
+
+        if(emailKey === 'target-phishing') {
+            startTimer();
+        }
+    }
+
+    function toggleScaffold(btn) {
+        const box = btn.nextElementSibling;
+        if (box.style.display === 'block') {
+            box.style.display = 'none';
+            btn.innerHTML = '<span>💡 點此展開 OCF SSD 資安小幫手（自我監控與分析提示）</span><span>▼</span>';
+        } else {
+            box.style.display = 'block';
+            btn.innerHTML = '<span>💡 收起資安小幫手</span><span>▲</span>';
+        }
+    }
+
+    function startTimer() {
+        clearInterval(timerInterval);
+        let time = 7182; 
+        const timerEl = document.getElementById('countdown-timer');
+        if(!timerEl) return;
+        
+        timerInterval = setInterval(() => {
+            time--;
+            let h = Math.floor(time / 3600);
+            let m = Math.floor((time % 3600) / 60);
+            let s = time % 60;
+            timerEl.textContent = `${h < 10 ? '0'+h : h}:${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+            if(time <= 0) clearInterval(timerInterval);
+        }, 1000);
+    }
+
+    function triggerAction(actionType) {
+        clearInterval(timerInterval);
+        const mailData = emailDatabase[currentEmailKey];
+        const actionResult = mailData.actions[actionType];
+        
+        document.getElementById('page2').classList.remove('active');
+        document.getElementById('page3').classList.add('active');
+        document.getElementById('urlInput').value = 'https://mail.bubu-rihe-studio.com/action-report';
+        
+        let badgeHtml = '';
+        if (actionResult.type === 'success') {
+            badgeHtml = `<div class="result-badge badge-success">✅ 處置策略優異 / 安全防禦成功</div>`;
+        } else if (actionResult.type === 'fail') {
+            badgeHtml = `<div class="result-badge badge-fail">❌ 處置策略失誤 / 遭受木馬或釣魚攻擊</div>`;
+        } else {
+            badgeHtml = `<div class="result-badge badge-warn">⚠️ 處置策略提醒 / 注意業務平衡</div>`;
+        }
+
+        document.getElementById('resultContent').innerHTML = `
+            ${badgeHtml}
+            <div class="result-title">${actionResult.title}</div>
+            <div class="result-analysis">
+                <h5>📊 策略效果與深度解析</h5>
+                ${actionResult.desc}
+            </div>
+            <div style="display:flex; gap:15px; justify-content:center;">
+                <button class="btn-retry" style="background:#64748b;" onclick="viewEmail('${currentEmailKey}')">‹ 重新測試此封郵件的其他策略</button>
+                <button class="btn-retry" onclick="goBackToFolder()">‹ 返回郵件列表選擇其他信件</button>
+            </div>
+        `;
+    }
+
+    function goBackToFolder() {
+        clearInterval(timerInterval);
+        document.getElementById('page2').classList.remove('active');
+        document.getElementById('page3').classList.remove('active');
+        document.getElementById('page1').classList.add('active');
+        
+        const activeMenu = document.querySelector('.sidebar-menu li.active-menu');
+        if (activeMenu) {
+            const folderId = activeMenu.id.replace('menu-', '');
+            document.getElementById('urlInput').value = `https://mail.bubu-rihe-studio.com/${folderId}`;
+        } else {
+            document.getElementById('urlInput').value = `https://mail.bubu-rihe-studio.com/inbox`;
+        }
+    }
+</script>
+</body>
+</html>
