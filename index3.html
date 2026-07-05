@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新手入職：數位資產安全防線與實戰測驗</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --card-hover: #334155;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --accent: #38bdf8;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container { width: 100%; max-width: 800px; }
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { font-size: 28px; margin-bottom: 10px; color: var(--accent); }
+        p.subtitle { color: var(--text-sub); font-size: 15px; }
+
+        /* 階段切換 */
+        .stage { display: none; animation: fadeIn 0.5s ease; }
+        .stage.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 情境導引區塊 */
+        .intro-box {
+            background: #111827; border: 1px solid #374151; border-left: 5px solid var(--accent);
+            padding: 22px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+        }
+        .intro-title { font-size: 18px; font-weight: bold; color: var(--accent); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+        .intro-text { color: var(--text-main); font-size: 14.5px; line-height: 1.7; margin: 0; }
+        .intro-steps { margin-top: 12px; padding-left: 20px; color: var(--text-sub); font-size: 14px; }
+        .intro-steps li { margin-bottom: 6px; }
+        .intro-steps strong { color: var(--warning); }
+
+        /* 進度條設計 */
+        .progress-container { background: #090d16; padding: 20px; border-radius: 12px; border: 1px solid #334155; margin-bottom: 30px; }
+        .progress-header { display: flex; justify-content: space-between; margin-bottom: 8px; font-weight: bold; }
+        .progress-bar-bg { height: 12px; background: #334155; border-radius: 6px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--success)); transition: width 0.4s ease; }
+
+        /* 檢核表樣式 */
+        .grid-container { display: grid; grid-template-columns: 1fr; gap: 25px; }
+        @media (min-width: 640px) { .grid-container { grid-template-columns: 1fr 1fr; } }
+        .section-title { font-size: 18px; border-bottom: 2px solid var(--accent); padding-bottom: 8px; margin-bottom: 15px; }
+        
+        /* 修正後的卡片與防變形對齊設計 */
+        .card { 
+            background: var(--card-bg); 
+            border: 1px solid #334155; 
+            border-radius: 10px; 
+            padding: 16px; 
+            margin-bottom: 12px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            gap: 12px; /* 確保左右有安全間隔 */
+            transition: all 0.2s; 
+            cursor: pointer; 
+            position: relative; 
+        }
+        .card:hover { background: var(--card-hover); border-color: var(--accent); transform: translateY(-2px); }
+        
+        .card-left { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
+            flex: 1; /* 讓左邊文字自動佔滿剩餘空間 */
+        }
+        
+        /* 限制型 Checkbox 樣式 */
+        .card input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--success); cursor: pointer; flex-shrink: 0; }
+        .card input[type="checkbox"]:disabled { cursor: not-allowed; opacity: 0.4; }
+        .card label { cursor: pointer; font-size: 15px; font-weight: 500; line-height: 1.4; }
+        .card.locked label { color: var(--text-sub); cursor: not-allowed; }
+
+        /* 修正後的狀態標籤：絕對不換行、不被壓縮 */
+        .info-icon { 
+            font-size: 13px; 
+            padding: 6px 14px; 
+            border-radius: 20px; 
+            font-weight: bold; 
+            transition: all 0.2s; 
+            white-space: nowrap; /* 關鍵：強制文字不換行 */
+            flex-shrink: 0;      /* 關鍵：防止按鈕被文字擠壓變小 */
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .status-locked { color: var(--danger); border: 1px solid var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .status-unlocked { color: var(--success); border: 1px solid var(--success); background: rgba(34, 197, 94, 0.1); }
+        .card:hover .status-unlocked { background: var(--success); color: #000; }
+
+        /* 彈出說明視窗 (Modal) */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); z-index: 100; justify-content: center; align-items: center; }
+        .modal-content { background: var(--card-bg); border: 1px solid var(--accent); width: 90%; max-width: 550px; border-radius: 16px; padding: 25px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); max-height: 85vh; overflow-y: auto; }
+        .modal-title { font-size: 20px; color: var(--accent); margin-top: 0; }
+        .modal-box { background: #0f172a; padding: 15px; border-radius: 8px; margin: 12px 0; border-left: 4px solid; }
+        .box-why { border-color: var(--accent); } 
+        .box-teach { border-color: var(--success); }
+        .box-how { border-color: var(--warning); }
+        .box-label { font-weight: bold; font-size: 13px; margin-bottom: 6px; display: block; }
+        .box-why .box-label { color: var(--accent); } 
+        .box-teach .box-label { color: var(--success); }
+        .box-how .box-label { color: var(--warning); }
+        .teach-path { font-family: monospace; background: #1e293b; padding: 4px 8px; border-radius: 4px; color: #f8fafc; display: inline-block; margin: 4px 0; font-size: 13px; }
+        .close-btn { background: var(--success); color: #000; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; font-size: 15px; transition: opacity 0.2s; }
+        .close-btn:hover { opacity: 0.9; }
+
+        /* 測驗專區與其餘樣式 */
+        .btn-main { display: none; width: 100%; padding: 16px; background: linear-gradient(90deg, var(--success), #16a34a); color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 30px; text-align: center; }
+        .quiz-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; color: var(--text-sub); font-size: 14px; }
+        .quiz-part-badge { background: #090d16; color: var(--accent); padding: 6px 12px; border-radius: 20px; font-weight: bold; border: 1px solid #334155; }
+        .question-box { background: var(--card-bg); border: 1px solid #334155; padding: 25px; border-radius: 16px; margin-bottom: 20px; }
+        .question-text { font-size: 18px; line-height: 1.6; margin-bottom: 20px; font-weight: 600; }
+        .options-grid { display: flex; flex-direction: column; gap: 12px; }
+        .option-btn { background: #0f172a; border: 1px solid #334155; color: var(--text-main); padding: 15px 20px; border-radius: 10px; font-size: 16px; text-align: left; cursor: pointer; transition: all 0.2s; }
+        .option-btn:hover:not(.disabled) { border-color: var(--accent); background: #1e293b; }
+        .option-btn.disabled { cursor: not-allowed; opacity: 0.8; }
+        .option-btn.correct { background: rgba(34, 197, 94, 0.2); border-color: var(--success); color: #86efac; }
+        .option-btn.wrong { background: rgba(239, 68, 68, 0.2); border-color: var(--danger); color: #fca5a5; }
+        .explanation-box { display: none; background: #090d16; border-left: 4px solid var(--accent); padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .explanation-title { font-weight: bold; color: var(--accent); margin-bottom: 8px; }
+        .btn-next { display: none; width: 100%; padding: 14px; background: var(--accent); color: #000; font-weight: bold; font-size: 16px; border: none; border-radius: 10px; cursor: pointer; margin-top: 20px; }
+        .result-box { text-align: center; padding: 40px 20px; background: var(--card-bg); border-radius: 16px; border: 1px solid #334155; }
+        .score-display { font-size: 48px; font-weight: bold; color: var(--accent); margin: 20px 0; }
+        .result-msg { font-size: 18px; line-height: 1.6; color: var(--text-sub); margin-bottom: 30px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>🛡️ 員工資安入職實戰訓練</h1>
+        <p class="subtitle" id="header-sub">設備安全防線與日常狀況處理</p>
+    </header>
+
+    <div id="stage-1" class="stage active">
+        <div class="intro-box">
+            <div class="intro-title">📋 任務簡報：邊學邊做建立安全基準</div>
+            <p class="intro-text">
+                歡迎加入團隊！在經手公務資料前，請協助將你的設備完成基礎資安強化。
+                <strong style="color:var(--warning)">為了確保防護確實落實，請先點擊各卡片閱讀「教學指南」，閱讀完畢後才能解鎖下方的核取方塊進行勾選。</strong>
+            </p>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-header">
+                <span>防護基準落實度 (Checklist)</span>
+                <span id="progress-text-1">0%</span>
+            </div>
+            <div class="progress-bar-bg"><div class="progress-fill" id="progress-fill-1"></div></div>
+        </div>
+
+        <div class="grid-container">
+            <div>
+                <div class="section-title">💻 工作站安全 (筆電 / PC)</div>
+                <div id="pc-list"></div>
+            </div>
+            <div>
+                <div class="section-title">📱 行動裝置安全 (手機 / 平板)</div>
+                <div id="mobile-list"></div>
+            </div>
+        </div>
+
+        <button class="btn-main" id="next-stage-btn" onclick="startQuiz()">
+            🎉 基礎防護已就緒！點擊進入「資安實戰測驗」 ➔
+        </button>
+    </div>
+
+    <div id="stage-2" class="stage">
+        <div class="progress-container">
+            <div class="progress-header">
+                <span>測驗進度</span>
+                <span id="quiz-progress-text">1 / 9</span>
+            </div>
+            <div class="progress-bar-bg"><div class="progress-fill" id="quiz-progress-fill" style="width: 11%;"></div></div>
+        </div>
+
+        <div class="quiz-header">
+            <span class="quiz-part-badge" id="quiz-part-label">第一部分：設備安全最低標準</span>
+            <span id="score-tracker">得分：0</span>
+        </div>
+
+        <div class="question-box">
+            <div class="question-text" id="q-text">題目載入中...</div>
+            <div class="options-grid" id="options-container"></div>
+            <div class="explanation-box" id="explanation-box">
+                <div class="explanation-title">💡 資安解析</div>
+                <div id="explanation-text"></div>
+            </div>
+        </div>
+        <button class="btn-next" id="btn-next" onclick="nextQuestion()">下一題 ➔</button>
+    </div>
+
+    <div id="stage-3" class="stage">
+        <div class="result-box">
+            <h2>🏆 測驗完成！你的資安防衛力評估</h2>
+            <div class="score-display" id="final-score">100 分</div>
+            <p class="result-msg" id="result-message">評估中...</p>
+            <button class="btn-main" style="display:inline-block; width:auto; padding: 12px 30px;" onclick="location.reload()">重新進行訓練</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="modal">
+    <div class="modal-content">
+        <h3 class="modal-title" id="modal-title">項目名稱</h3>
+        
+        <div class="modal-box box-why">
+            <span class="box-label">💡 為什麼這很關鍵？</span>
+            <div id="modal-why"></div>
+        </div>
+
+        <div class="modal-box box-teach">
+            <span class="box-label">🛠️ 手把手設定教學</span>
+            <div id="modal-teach"></div>
+        </div>
+        
+        <div class="modal-box box-how">
+            <span class="box-label">⚠️ 發生異常狀況怎麼辦？</span>
+            <div id="modal-how"></div>
+        </div>
+        
+        <button class="close-btn" onclick="confirmAndCloseModal()">我已閱讀並完成設備調整</button>
+    </div>
+</div>
+
+<script>
+    /* ================= 資料庫：檢核表＋實作教學路徑 ================= */
+    const securityData = [
+        { 
+            id: 'pc-1', 
+            category: 'pc', 
+            title: '啟用全碟加密 (BitLocker/FileVault)', 
+            why: '硬碟若遭竊，駭客拔到另一台電腦也無法讀取商業機密與暫存檔案。', 
+            teach: `<strong>Windows (BitLocker)：</strong><br>
+                    <span class="teach-path">開始 ➔ 設定 ➔ 隱私權與安全性 ➔ 裝置加密</span> ➔ 開啟。<br>
+                    *(或在搜尋列輸入「管理 BitLocker」並依照指引備份金鑰)<br><br>
+                    <strong>macOS (FileVault)：</strong><br>
+                    <span class="teach-path">蘋果選單 ➔ 系統設定 ➔ 隱私權與安全性 ➔ FileVault</span> ➔ 點擊「開啟」。`,
+            how: '遺失筆電時：請立刻通報 IT 部門，協助發動「遠端憑證撤銷」。' 
+        },
+        { 
+            id: 'pc-2', 
+            category: 'pc', 
+            title: '設定 5 分鐘閒置自動鎖定', 
+            why: '離開座位時，未鎖屏的電腦是實體入侵（如被插惡意隨身碟）的最大危險期。', 
+            teach: `<strong>Windows：</strong><br>
+                    <span class="teach-path">開始 ➔ 設定 ➔ 個性化 ➔ 鎖定畫面 ➔ 螢幕保護程式設定</span> ➔ 勾選「在繼續工作後顯示登入畫面」，並將等候時間設為 5 分鐘。<br><br>
+                    <strong>macOS：</strong><br>
+                    <span class="teach-path">蘋果選單 ➔ 系統設定 ➔ 鎖定畫面</span> ➔ 將「閒置時關閉顯示器」與「螢幕保護程式啟動後需要密碼」皆設為 5 分鐘以內。`,
+            how: '若發現座位附近疑似有人動過電腦，請立刻重開機並更改公務密碼區域。' 
+        },
+        { 
+            id: 'pc-3', 
+            category: 'pc', 
+            title: '設定作業系統自動更新', 
+            why: '80% 勒索病毒是透過「未修補」的系統漏洞進行攻擊。自動更新是最好的安全疫苗。', 
+            teach: `<strong>Windows：</strong><br>
+                    <span class="teach-path">開始 ➔ 設定 ➔ Windows 更新</span> ➔ 確認開啟自動下載，或點選「檢查更新」修補至最新版。<br><br>
+                    <strong>macOS：</strong><br>
+                    <span class="teach-path">蘋果選單 ➔ 系統設定 ➔ 一般 ➔ 軟體更新</span> ➔ 點擊「自動更新」旁的資訊按鈕 (i)，確保所有自動檢查與安裝項目皆開啟。`,
+            how: '若遇到更新異常或憑證警告，請勿嘗試強制跳過，應立刻截圖寄給資安團隊。' 
+        },
+        { 
+            id: 'mob-1', 
+            category: 'mobile', 
+            title: '開啟「尋找我的裝置」功能', 
+            why: '公務手機常綁定雙因子驗證 (MFA)，遺失等於交出帳號的第二支鑰匙。', 
+            teach: `<strong>iPhone (iOS)：</strong><br>
+                    <span class="teach-path">設定 ➔ 點擊頂部你的名字(Apple ID) ➔ 尋找 ➔ 尋找我的 iPhone</span> ➔ 將其開啟，並建議開啟「傳送最後位置」。<br><br>
+                    <strong>Android：</strong><br>
+                    <span class="teach-path">設定 ➔ Google ➔ 所有服務 ➔ 尋找我的裝置</span> ➔ 開啟「使用尋找我的裝置」功能。`,
+            how: '手機遺失第一時間：立刻登入 iCloud 或 Google Find My 網頁發送「遠端鎖定」與「抹除資料」。' 
+        },
+        { 
+            id: 'mob-2', 
+            category: 'mobile', 
+            title: '使用生物辨識與強密碼設定', 
+            why: '簡單圖形鎖很容易由螢幕「指紋軌跡」猜出，4 位數密碼幾秒內即可被暴力破解。', 
+            teach: `<strong>iPhone (Face ID / Touch ID)：</strong><br>
+                    <span class="teach-path">設定 ➔ Face ID 與密碼</span> ➔ 設定密碼（請勿使用連續數字或生日）並錄入面孔。<br><br>
+                    <strong>Android：</strong><br>
+                    <span class="teach-path">設定 ➔ 安全性與隱私權 ➔ 裝置鎖定 ➔ 生物辨識</span> ➔ 錄入指紋或臉部，並設定複雜的圖形或 PIN 碼作為備用密碼。`,
+            how: '若被迫解鎖，請盡速聯繫電信公司掛失 SIM 卡，並從電腦端強制登出公務帳號。' 
+        }
+    ];
+
+    /* ================= 資料庫：9大選擇題 ================= */
+    const quizData = [
+        { part: "第一部分：設備安全最低標準", q: "為了確保公務設備的安全，我們應該對「電腦與手機」的螢幕鎖定功能設定多久時間未操作自動鎖定？", options: ["(A) 30 分鐘到 1 小時之間", "(B) 5 分鐘（含）以內", "(C) 不需要設定自動鎖定，離開時記得關機就好", "(D) 只有電腦需要設定，手機不用"], ans: 1, exp: "無論是公務手機或電腦，都應設定在閒置 5 分鐘（含）以內自動進入鎖定狀態，且喚醒時必須輸入密碼或進行生物辨識（指紋／臉部），防止短暫離開時資料外洩。" },
+        { part: "第一部分：設備安全最低標準", q: "關於裝置的「全盤加密」（如 Windows BitLocker、macOS FileVault），以下哪一句敘述是正確的？", options: ["(A) 這只會讓電腦變慢，對安全性沒有幫助", "(B) 這是防毒軟體的一種，能防止電腦中病毒", "(C) 能確保裝置遺失或被竊時，硬碟被拔出也無法讀取裡面的公務資料", "(D) 只有伺服器等級的電腦才需要開啟加密"], ans: 2, exp: "全盤加密是防護實體裝置遺失的最後一道防線。即使筆電被偷、硬碟被拆下來裝在別台電腦上，沒有解密密碼，駭客也看不到裡面的機密檔案。" },
+        { part: "第一部分：設備安全最低標準", q: "下列哪一種裝置設定，符合我們對「軟體安全與更新」的最低標準要求？", options: ["(A) 為避免操作習慣被改變，關閉作業系統與應用程式的自動更新", "(B) 在電腦與手機上安裝官方的應用程式，並開啟自動更新功能", "(C) 為了公務需要，上網隨意下載「破解版」或「綠色免安裝版」軟體", "(D) 防毒軟體太吵了，直接把它關閉即可"], ans: 1, exp: "隨時保持作業系統（iOS / Android / macOS / Windows）與軟體更新到最新狀態，並從官方應用商店下載軟體，才能有效修補最新的資安漏洞。" },
+        { part: "第二部分：日常防護篇", q: "員工如果有需求將「自帶設備（BYOD：如個人手機、個人筆電）」用於公務上，下列做法何者正確？", options: ["(A) 只要是自己的設備，就算不設螢幕密碼也可以處理公務資料", "(B) 個人手機裡下載各種不明來源的免費遊戲，不會影響公務安全", "(C) 必須遵守與公務設備相同的資安底線（如：設螢幕鎖、開啟加密、更新軟體）", "(D) 為了方便，把公司重要客戶名單直接存在個人手機的本地備忘錄裡"], ans: 2, exp: "只要設備有接觸、處理到組織的公務資料，無論是公司配發還是員工個人自帶的裝置，都必須符合相同的「最低安全標準」，杜絕防護破口。" },
+        { part: "第二部分：日常防護篇", q: "在公共場所（如咖啡廳、高鐵站）使用公務電腦或手機處理工作時，下列哪一個行為最具風險？", options: ["(A) 使用自備的防窺片，防止旁人偷窺螢幕", "(B) 連接店家沒有設定密碼的「免費公開 Wi-Fi」直接登入內部系統", "(C) 暫時離開座位去洗手間時，按「Win+L」或「Ctrl+Cmd+Q」鎖定螢幕", "(D) 使用手機的 4G/5G 網路開啟個人熱點分享給筆電使用"], ans: 1, exp: "免費且無密碼的公開 Wi-Fi 極易遭受中間人攻擊（Man-in-the-Middle Attack），旁人可能竊取你的帳號密碼與傳輸資料。在外辦公最好使用手機網路熱點或連接可靠的 VPN。" },
+        { part: "第二部分：日常防護篇", q: "關於裝置生物辨識與密碼設定，以下哪一個習慣最值得鼓勵？", options: ["(A) 因為指紋解鎖偶爾會失敗，乾脆把螢幕鎖密碼設為「123456」以便快速輸入", "(B) 在手機背面貼上一張小紙條，寫著解鎖密碼，以免自己忘記", "(C) 設定 8 位數以上、難以猜測的複雜密碼，並搭配生物辨識（指紋／臉部）解鎖", "(D) 跟同部門同事共用同一個電腦帳號和密碼，方便互相看資料"], ans: 2, exp: "生物辨識方便快速，但搭配的「備用密碼」也必須足夠強大（避免生日、簡單連續數字），同時嚴守一帳號一人的原則，落實權限管理。" },
+        { part: "第三部分：緊急應變篇", q: "如果你在出差或通勤途中，不小心遺失了配有公務帳號的「公務手機」，以下哪個是第一時間最該做的正確步驟？", options: ["(A) 先回家找找看，過三個星期真的找不到再說", "(B) 立即通報主管／IT 單位，並嘗試透過「尋找我的裝置」遠端登出帳號或「遠端清除資料」", "(C) 在臉書或 IG 發文，請廣大網友幫忙在車站協尋", "(D) 趕快去通訊行買一台一模一樣的新手機，當作沒事發生"], ans: 1, exp: "設備遺失的第一要務是「止血」與「通報」。若平時有開通「尋找（Find My）」或「遠端抹除」功能，應立即觸發抹除機制，並立即更改所有登入該裝置的公務帳號密碼。" },
+        { part: "第三部分：緊急應變篇", q: "在辦公室收郵件時，收到一封自稱「主管／客戶」寄來、要求立刻點擊連結下載檔案的信件，但寄件者帳號網址怪怪的，這時你該怎麼處理？", options: ["(A) 主管的命令不能等，趕快點開連結下載", "(B) 不點擊、不下載，並透過其他獨立管道（如：通訊軟體、當面詢問或致電）向本人確認", "(C) 轉寄給全公司所有人，問大家這封信是不是真的", "(D) 點開連結後發現要輸入密碼，就把公司密碼輸入進去看看會發生什麼事"], ans: 1, exp: "這是典型的「社交工程釣魚信件」。遇上緊急或不尋常的要求時，務必透過「第二管道」向當事人求證，切勿直接在陌生頁面輸入任何帳號密碼。" },
+        { part: "第三部分：緊急應變篇", q: "當你的公務電腦或手機即將「退役、換新」，或者你要將公務機繳回組織時，對於舊裝置裡的資料應該如何處理？", options: ["(A) 直接丟進資源回收桶，相信不會有人去撿", "(B) 把桌面的檔案拖到「資源回收桶」並清空就好", "(C) 使用「重設／還原原廠設定」或進行「磁碟徹底清除（Secure Erase/Wipe）」，確保資料無法被復原", "(D) 把裝置封存在自己家裡的抽屜，不要還給公司"], ans: 2, exp: "單純把檔案丟到回收桶，只要透過簡單的資料救援軟體就能抓回來。退役或繳回設備前，務必進行「還原原廠設定」或資安等級的資料清除，避免廢棄裝置成為資料外洩的缺口。" }
+    ];
+
+    /* ================= 階段一邏輯：檢核表 ================= */
+    let activeCardId = null; 
+
+    function renderChecklist() {
+        const pcContainer = document.getElementById('pc-list');
+        const mobContainer = document.getElementById('mobile-list');
+        
+        securityData.forEach(item => {
+            const cardHtml = `
+                <div class="card locked" id="card-${item.id}" onclick="openModal('${item.id}')">
+                    <div class="card-left">
+                        <input type="checkbox" class="check-box" id="chk-${item.id}" disabled onclick="event.stopPropagation(); updateProgress();">
+                        <label id="lbl-${item.id}" onclick="event.stopPropagation(); handleLabelClick('${item.id}');">${item.title}</label>
+                    </div>
+                    <span class="info-icon status-locked" id="status-${item.id}">🔒 待閱讀解鎖</span>
+                </div>`;
+            if (item.category === 'pc') pcContainer.innerHTML += cardHtml;
+            else mobContainer.innerHTML += cardHtml;
+        });
+    }
+
+    function handleLabelClick(id) {
+        const checkbox = document.getElementById(`chk-${id}`);
+        if (!checkbox.disabled) {
+            checkbox.click();
+        } else {
+            openModal(id);
+        }
+    }
+
+    function openModal(id) {
+        activeCardId = id; 
+        const item = securityData.find(d => d.id === id);
+        if (!item) return;
+        
+        document.getElementById('modal-title').innerText = item.title;
+        document.getElementById('modal-why').innerText = item.why;
+        document.getElementById('modal-teach').innerHTML = item.teach;
+        document.getElementById('modal-how').innerText = item.how;
+        document.getElementById('modal').style.display = 'flex';
+    }
+
+    function confirmAndCloseModal() {
+        if (activeCardId) {
+            const checkbox = document.getElementById(`chk-${activeCardId}`);
+            const card = document.getElementById(`card-${activeCardId}`);
+            const statusLabel = document.getElementById(`status-${activeCardId}`);
+            
+            checkbox.disabled = false;
+            card.classList.remove('locked');
+            statusLabel.innerText = "🔓 已解鎖可勾選";
+            statusLabel.className = "info-icon status-unlocked";
+        }
+        closeModal();
+    }
+
+    function closeModal() { 
+        document.getElementById('modal').style.display = 'none'; 
+        activeCardId = null;
+    }
+
+    function updateProgress() {
+        const total = securityData.length;
+        const checked = document.querySelectorAll('.check-box:checked').length;
+        const percent = Math.round((checked / total) * 100);
+        document.getElementById('progress-fill-1').style.width = percent + '%';
+        document.getElementById('progress-text-1').innerText = percent + '%';
+        const nextBtn = document.getElementById('next-stage-btn');
+        nextBtn.style.display = (percent === 100) ? 'block' : 'none';
+        if(percent === 100) nextBtn.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    /* ================= 階段二邏輯：選擇題測驗 ================= */
+    let currentQ = 0; let score = 0; let hasAnswered = false;
+
+    function startQuiz() {
+        document.getElementById('stage-1').classList.remove('active');
+        document.getElementById('stage-2').classList.add('active');
+        document.getElementById('header-sub').innerText = "情境模擬與危機應變實戰測驗";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        hasAnswered = false;
+        const data = quizData[currentQ];
+        document.getElementById('quiz-part-label').innerText = data.part;
+        document.getElementById('quiz-progress-text').innerText = `${currentQ + 1} / ${quizData.length}`;
+        document.getElementById('quiz-progress-fill').style.width = `${((currentQ + 1) / quizData.length) * 100}%`;
+        document.getElementById('score-tracker').innerText = `目前得分：${score}`;
+        document.getElementById('q-text').innerText = `Q${currentQ + 1}. ${data.q}`;
+        
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = '';
+        data.options.forEach((opt, idx) => {
+            optionsContainer.innerHTML += `<button class="option-btn" onclick="selectOption(${idx})" id="opt-${idx}"><span>${opt}</span></button>`;
+        });
+
+        document.getElementById('explanation-box').style.display = 'none';
+        document.getElementById('btn-next').style.display = 'none';
+    }
+
+    function selectOption(selectedIndex) {
+        if (hasAnswered) return; hasAnswered = true;
+        const data = quizData[currentQ];
+        const allBtns = document.querySelectorAll('.option-btn');
+        allBtns.forEach(btn => btn.classList.add('disabled'));
+
+        if (selectedIndex === data.ans) {
+            document.getElementById(`opt-${selectedIndex}`).classList.add('correct');
+            score += 10;
+        } else {
+            document.getElementById(`opt-${selectedIndex}`).classList.add('wrong');
+            document.getElementById(`opt-${data.ans}`).classList.add('correct'); 
+        }
+        document.getElementById('score-tracker').innerText = `目前得分：${score}`;
+        document.getElementById('explanation-text').innerText = data.exp;
+        document.getElementById('explanation-box').style.display = 'block';
+        document.getElementById('btn-next').style.display = 'block';
+        document.getElementById('btn-next').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function nextQuestion() {
+        currentQ++;
+        if (currentQ < quizData.length) { loadQuestion(); window.scrollTo({ top: 100, behavior: 'smooth' }); } 
+        else { showResults(); }
+    }
+
+    /* ================= 階段三邏輯：結算 ================= */
+    function showResults() {
+        document.getElementById('stage-2').classList.remove('active');
+        document.getElementById('stage-3').classList.add('active');
+        document.getElementById('header-sub').innerText = "訓練結束";
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        const finalScoreEl = document.getElementById('final-score');
+        const msgEl = document.getElementById('result-message');
+        finalScoreEl.innerText = `${score} / 90 分`;
+        
+        if (score === 90) { finalScoreEl.style.color = 'var(--success)'; msgEl.innerText = "🌟 完美通關！你具備了絕佳的資安敏感度，組織的數位安全由你守護！"; } 
+        else if (score >= 70) { finalScoreEl.style.color = 'var(--accent)'; msgEl.innerText = "👏 表現不錯！你已經掌握了絕大部分的安全防線，但在部分狀況處理上還可以更加謹慎喔！"; } 
+        else { finalScoreEl.style.color = 'var(--warning)'; msgEl.innerText = "⚠️ 警報響起！你的防禦破口有點多喔！建議重新複習解析，並再挑戰一次！"; }
+    }
+
+    renderChecklist();
+</script>
+</body>
+</html>
